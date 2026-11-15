@@ -8,6 +8,17 @@ og **Kommer snart**. Den har også en pauseskærm med serie-slideshow, stort ur 
 > **Kræver SeasonPass-appen på din telefon.** SeasonPass TV er kun den ene halvdel: det er telefonappen, der kender dine serier og sender dem
 > til tv'et over Wi-Fi. SeasonPass-appen er et separat projekt og ikke en del af dette repo. Uden den viser tv'et kun dine apps og en tom serieliste.
 
+![Forsiden: en stor serie øverst, så Næste afsnit og Dine apps](docs/screenshots/da/home.jpg)
+
+| | |
+|---|---|
+| ![Dine apps, På pause og Opdag serier](docs/screenshots/da/apps-discover.jpg) | ![Opdag serier og Kommer snart](docs/screenshots/da/discover-coming-soon.jpg) |
+| Rul ned: **Dine apps**, **På pause** og **Opdag serier**. | **Opdag serier** og **Kommer snart**. |
+
+![Pauseskærmen: en serie, stort ur og dato](docs/screenshots/da/screensaver.jpg)
+
+Skærmbillederne viser den danske version. Tv'et følger sproget i SeasonPass-appen på telefonen (otte sprog). Engelske skærmbilleder: [README.md](README.md).
+
 ## Det kan den
 
 - Viser næste afsnit af dine serier og regner selv ud, hvornår et nyt afsnit er udkommet, også når telefonen er slukket.
