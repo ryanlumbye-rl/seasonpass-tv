@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -32,6 +33,7 @@ public class AppsActivity extends Activity {
     private static final int COLS = 5;
 
     private Typeface semibold, bold;
+    private Strings S;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -44,12 +46,17 @@ public class AppsActivity extends Activity {
         scroll.setVerticalScrollBarEnabled(false);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(dp(48), dp(40), dp(48), dp(40));
+        col.setPadding(dp(56), dp(48), dp(56), dp(40));
         scroll.addView(col);
 
-        TextView title = text(Strings.of(this).t("tvhome.apps"), 30, bold);
-        title.setPadding(0, 0, 0, dp(18));
+        S = Strings.of(this);
+        TextView title = text(S.t("tvhome.apps"), 40, bold);
+        title.setLetterSpacing(-0.02f);
         col.addView(title);
+        TextView hint = text(S.t("tvhome.appsHint"), 13, semibold);
+        hint.setAlpha(0.68f);
+        hint.setPadding(0, dp(6), 0, dp(14));
+        col.addView(hint);
 
         PackageManager pm = getPackageManager();
         Intent q = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
@@ -115,6 +122,24 @@ public class AppsActivity extends Activity {
                 return;
             }
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        });
+        // Mærket: appen står på forsiden. Hold OK nede for at føje den til eller fjerne den.
+        TextView badge = text("✓", 13, bold);
+        badge.setGravity(Gravity.CENTER);
+        badge.setTextColor(0xFF0E0E10);
+        GradientDrawable bb = new GradientDrawable();
+        bb.setShape(GradientDrawable.OVAL);
+        bb.setColor(FG);
+        badge.setBackground(bb);
+        badge.setVisibility(HomeApps.has(this, pkg) ? View.VISIBLE : View.GONE);
+        FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.TOP | Gravity.END);
+        blp.setMargins(0, dp(6), dp(6), 0);
+        tile.addView(badge, blp);
+        tile.setOnLongClickListener(x -> {
+            boolean on = HomeApps.toggle(this, pkg);
+            badge.setVisibility(on ? View.VISIBLE : View.GONE);
+            Toast.makeText(this, S.t(on ? "tvhome.homeAdded" : "tvhome.homeRemoved", "app", String.valueOf(r.loadLabel(pm))), Toast.LENGTH_SHORT).show();
+            return true;
         });
         return tile;
     }

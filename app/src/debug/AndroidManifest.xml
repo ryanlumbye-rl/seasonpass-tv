@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kun til debug-bygget: gør undersiderne startbare fra adb (am start), så de kan prøves og fotograferes i emulatoren. Ikke med i release. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <activity android:name=".SettingsActivity" android:exported="true" tools:replace="android:exported" />
+        <activity android:name=".AppsActivity" android:exported="true" tools:replace="android:exported" />
+        <activity android:name=".SaverPreviewActivity" android:exported="true" tools:replace="android:exported" />
+    </application>
+</manifest>

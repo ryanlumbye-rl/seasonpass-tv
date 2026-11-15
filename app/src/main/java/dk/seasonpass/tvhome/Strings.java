@@ -86,6 +86,13 @@ final class Strings {
         D.put("tvhome.tvSettings", "Tv'ets indstillinger");
         D.put("tvhome.cantOpen", "Indstillinger kunne ikke åbnes");
         D.put("tvhome.updatesOff", "Opdateringer er ikke slået til i denne version");
+        D.put("tvhome.homeRemoved", "{app} er fjernet fra forsiden");
+        D.put("tvhome.homeAdded", "{app} er føjet til forsiden");
+        D.put("tvhome.appsHint", "Hold OK nede på en app for at føje den til forsiden eller fjerne den");
+        D.put("tvhome.homeApps", "Apps på forsiden");
+        D.put("tvhome.homeAppsValue", "{n} valgt");
+        D.put("tvhome.sectionHome", "Forside");
+        D.put("tvhome.sectionSystem", "System");
     }
 
     static final TimeZone CPH = TimeZone.getTimeZone("Europe/Copenhagen");

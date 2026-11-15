@@ -59,12 +59,6 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private static final int MUTED = 0xADF2F1EC;   // 0.68
     private static final int FAINT = 0x80F2F1EC;   // 0.5
 
-    /** Dine tjenester først, i den rækkefølge mockuppen viser dem; resten alfabetisk bagefter. */
-    private static final List<String> APP_ORDER = Arrays.asList(
-            "dk.tv2.tv2playtv", "com.netflix.ninja", "com.google.android.youtube.tv", "com.disney.disneyplus",
-            "com.amazon.amazonvideo.livingroom", "com.viaplay.android", "com.wbd.stream", "dk.dr.tvplayer",
-            "com.apple.atve.androidtv.appletv");
-
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newFixedThreadPool(2);
     private final LruCache<String, Bitmap> cache = new LruCache<String, Bitmap>(32 * 1024 * 1024) {
@@ -811,18 +805,11 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private View appsRow() {
         LinearLayout items = new LinearLayout(this);
         PackageManager pm = getPackageManager();
-        Intent q = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
-        List<ResolveInfo> found = pm.queryIntentActivities(q, 0);
+        // Rækken er brugerens valg (HomeApps); lange tryk på OK fjerner en app, og "Alle apps" føjer til.
+        List<String> chosen = HomeApps.list(this);
         List<ResolveInfo> apps = new ArrayList<>();
-        // Forsiden viser kun streaming-tjenesterne (APP_ORDER); resten ligger på undersiden "Apps".
-        for (ResolveInfo r : found) if (APP_ORDER.contains(r.activityInfo.packageName)) apps.add(r);
-        apps.sort((a, b) -> {
-            int ia = APP_ORDER.indexOf(a.activityInfo.packageName), ib = APP_ORDER.indexOf(b.activityInfo.packageName);
-            if (ia < 0) ia = 1000;
-            if (ib < 0) ib = 1000;
-            if (ia != ib) return ia - ib;
-            return String.valueOf(a.loadLabel(pm)).compareToIgnoreCase(String.valueOf(b.loadLabel(pm)));
-        });
+        for (ResolveInfo r : HomeApps.installed(this)) if (chosen.contains(r.activityInfo.packageName)) apps.add(r);
+        apps.sort((x, y) -> chosen.indexOf(x.activityInfo.packageName) - chosen.indexOf(y.activityInfo.packageName));
         for (ResolveInfo r : apps) {
             String pkg = r.activityInfo.packageName;
             FrameLayout tile = new FrameLayout(this);
@@ -850,6 +837,15 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             }
             tile.setContentDescription(r.loadLabel(pm));
             tile.setOnClickListener(x -> launchPackage(pkg));
+            tile.setOnLongClickListener(x -> {
+                HomeApps.toggle(this, pkg);
+                int at = items.indexOfChild(tile);
+                items.removeView(tile);
+                View next = items.getChildAt(Math.min(at, items.getChildCount() - 1));
+                if (next != null) next.requestFocus();
+                Toast.makeText(this, S.t("tvhome.homeRemoved", "app", String.valueOf(r.loadLabel(pm))), Toast.LENGTH_SHORT).show();
+                return true;
+            });
             tile.setOnFocusChangeListener(chain(tile, (x, has) -> { if (has) restoreHero(); }));
             items.addView(tile, sized(128, 72, 12));
         }
