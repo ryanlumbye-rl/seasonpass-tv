@@ -20,6 +20,7 @@ public class SeasonDream extends DreamService {
     @Override
     public void onDreamingStarted() {
         super.onDreamingStarted();
+        Profiles.sessionStart(this);   // pauseskærm = ingen bruger tv'et lige nu: en ny session kan begynde
         if (view != null) view.start();
     }
 

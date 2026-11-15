@@ -37,10 +37,14 @@ public class PowerOnService extends AccessibilityService {
         // Systemet holder denne tjenestes proces i live, så modtageren til telefonen svarer også,
         // mens en anden app er fremme (se SyncServer).
         SyncServer.start(this);
-        if (SystemClock.elapsedRealtime() < BOOT_WINDOW_MS) armedUntil = BOOT_WINDOW_MS;
+        if (SystemClock.elapsedRealtime() < BOOT_WINDOW_MS) {
+            armedUntil = BOOT_WINDOW_MS;
+            Profiles.sessionStart(this);
+        }
         screenOn = new BroadcastReceiver() {
             @Override public void onReceive(Context c, Intent i) {
                 armedUntil = SystemClock.elapsedRealtime() + SCREEN_ON_WINDOW_MS;
+                Profiles.sessionStart(c);   // tv'et tændt: ny session, første telefon der sender, overtager
             }
         };
         registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));

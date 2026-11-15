@@ -26,10 +26,26 @@ final class Actions {
         return c.getApplicationContext().getSharedPreferences("sync", Context.MODE_PRIVATE);
     }
 
-    /** Alle ikke kvitterede handlinger, ældste først. */
-    static synchronized JSONArray all(Context c) {
+    /** Hver profil har sin egen kø ("actions_<id>"); før profiler og fra Mac'en: "actions". */
+    private static String key(String profile) {
+        return profile == null || profile.isEmpty() ? "actions" : "actions_" + profile;
+    }
+
+    /** Den første profil arver køen fra før profilerne fandtes. */
+    static synchronized void adopt(Context c, String profile) {
+        SharedPreferences p = prefs(c);
+        String old = p.getString("actions", null);
+        if (old != null && !p.contains(key(profile))) {
+            p.edit().putString(key(profile), old).remove("actions").apply();
+        }
+    }
+
+    /** Alle ikke kvitterede handlinger for den aktive profil, ældste først. */
+    static JSONArray all(Context c) { return all(c, Profiles.active(c)); }
+
+    static synchronized JSONArray all(Context c, String profile) {
         try {
-            return new JSONArray(prefs(c).getString("actions", "[]"));
+            return new JSONArray(prefs(c).getString(key(profile), "[]"));
         } catch (Exception e) {
             return new JSONArray();
         }
@@ -37,6 +53,7 @@ final class Actions {
 
     /** Tilføjer en handling; en ens handling for samme serie, der allerede venter, tilføjes ikke igen. */
     static synchronized void add(Context c, String kind, long tmdbId, String title) {
+        String profile = Profiles.active(c);
         try {
             JSONArray now = all(c);
             for (int i = 0; i < now.length(); i++) {
@@ -52,24 +69,26 @@ final class Actions {
                     .put("tmdbId", tmdbId)
                     .put("title", title)
                     .put("at", System.currentTimeMillis()));
-            prefs(c).edit().putString("actions", next.toString()).apply();
+            prefs(c).edit().putString(key(profile), next.toString()).apply();
         } catch (Exception ignored) { }
     }
 
-    /** Fjerner de kvitterede handlinger. */
-    static synchronized void ack(Context c, Set<String> ids) {
+    /** Fjerner de kvitterede handlinger fra profilens kø. */
+    static synchronized void ack(Context c, String profile, Set<String> ids) {
         try {
-            JSONArray now = all(c), keep = new JSONArray();
+            JSONArray now = all(c, profile), keep = new JSONArray();
             for (int i = 0; i < now.length(); i++) {
                 if (!ids.contains(now.getJSONObject(i).optString("id"))) keep.put(now.get(i));
             }
-            prefs(c).edit().putString("actions", keep.toString()).apply();
+            prefs(c).edit().putString(key(profile), keep.toString()).apply();
         } catch (Exception ignored) { }
     }
 
     /** Tømmer køen (kun til vedligehold fra adb, se FeedProvider). */
     static synchronized void clear(Context c) {
-        prefs(c).edit().remove("actions").apply();
+        SharedPreferences.Editor e = prefs(c).edit();
+        for (String k : new java.util.ArrayList<>(prefs(c).getAll().keySet())) if (k.startsWith("actions")) e.remove(k);
+        e.apply();
     }
 
     /** TMDB-id'er, der venter på telefonen: skjules fra Opdag serier. */

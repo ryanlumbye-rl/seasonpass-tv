@@ -82,6 +82,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private int heroIndex = 0;
     private JSONObject currentHero;
     private long feedStamp = -1;
+    /** Profilen, rækkerne er bygget for; skifter den, vises navnet kort. */
+    private String shownProfile;
     /** Feed version 2 som modtaget; rækkerne regnes ud fra den igen, når uret flytter et afsnit. */
     private JSONObject v2;
     private String shownSignature = "";
@@ -155,6 +157,28 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         String n = Prefs.name(this);
         avatar.setText(n.isEmpty() ? "" : new String(Character.toChars(Character.toUpperCase(n.codePointAt(0)))));
         avatar.setForeground(n.isEmpty() ? new PersonDrawable() : null);   // uden navn: et neutralt personikon i stedet for en tom ring
+    }
+
+    /** Vælg profil i hånden (flere telefoner parret). Valget gælder, til tv'et får en ny session med en anden telefon. */
+    private void pickProfile() {
+        List<String> ids = Profiles.all(this);
+        if (ids.size() < 2) {
+            Toast.makeText(this, "Kun én profil. Parr flere telefoner i SeasonPass for at skifte.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        String now = Profiles.active(this);
+        String[] labels = new String[ids.size()];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = (ids.get(i).equals(now) ? "\u2713  " : "     ") + Profiles.label(this, ids.get(i), i);
+        }
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Hvem ser?")
+                .setItems(labels, (d, which) -> {
+                    try { Profiles.select(this, ids.get(which)); } catch (Exception ignored) { }
+                    feedStamp = -1;
+                    reloadIfChanged();
+                })
+                .show();
     }
 
     /** Hoved og skuldre inde i avatarens ring, til når telefonen ikke har sendt et navn. */
@@ -355,6 +379,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         ring.setShape(GradientDrawable.OVAL);
         ring.setStroke(dp(1), 0x47F2F1EC);
         avatar.setBackground(ring);
+        avatar.setFocusable(true);
+        avatar.setOnClickListener(x -> pickProfile());
+        avatar.setOnFocusChangeListener((x, has) -> avatar.setForeground(has ? focusRing(dp(17), dp(3)) : null));
         top.addView(avatar, new LinearLayout.LayoutParams(dp(34), dp(34)));
         clock = text("", 17, regular, FG);
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -509,6 +536,12 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     }
 
     private void loadFeed(File f) {
+        String profile = Profiles.active(this);
+        if (shownProfile != null && !profile.equals(shownProfile) && !profile.isEmpty()) {
+            List<String> ids = Profiles.all(this);
+            Toast.makeText(this, Profiles.label(this, profile, Math.max(0, ids.indexOf(profile))), Toast.LENGTH_SHORT).show();
+        }
+        shownProfile = profile;
         content.removeAllViews();
         heroes.clear();
         heroById.clear();

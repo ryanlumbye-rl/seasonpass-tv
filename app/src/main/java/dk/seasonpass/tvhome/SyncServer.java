@@ -127,18 +127,18 @@ final class SyncServer {
                 if (!auth.startsWith("Bearer ") || !tokens().contains(auth.substring(7))) { reply(sock, 401, "{}"); return; }
                 JSONObject feed = new JSONObject(text);
                 if (feed.optInt("version") != 2) { reply(sock, 400, "{}"); return; }
-                write(feed);
+                boolean active = write(feed, Profiles.id(auth.substring(7)));
                 reply(sock, 200, "{\"ok\":true}");
-                main.post(() -> { if (listener != null) listener.onFeed(); });
+                if (active) main.post(() -> { if (listener != null) listener.onFeed(); });
             } else if (method.equals("GET") && path.equals("/actions")) {
                 if (!authorized(auth)) { reply(sock, 401, "{}"); return; }
-                reply(sock, 200, new JSONObject().put("actions", Actions.all(app)).toString());
+                reply(sock, 200, new JSONObject().put("actions", Actions.all(app, Profiles.id(auth.substring(7)))).toString());
             } else if (method.equals("POST") && path.equals("/actions/ack")) {
                 if (!authorized(auth)) { reply(sock, 401, "{}"); return; }
                 JSONArray ids = new JSONObject(text).optJSONArray("ids");
                 Set<String> done = new HashSet<>();
                 for (int i = 0; ids != null && i < ids.length(); i++) done.add(ids.optString(i));
-                Actions.ack(app, done);
+                Actions.ack(app, Profiles.id(auth.substring(7)), done);
                 reply(sock, 200, "{\"ok\":true}");
             } else {
                 reply(sock, 404, "{}");
@@ -186,28 +186,36 @@ final class SyncServer {
         return app.getSharedPreferences("sync", Context.MODE_PRIVATE);
     }
 
-    /** Skriver feeden atomisk og rydder billeder, den ikke længere bruger. */
-    private void write(JSONObject feed) throws Exception {
+    /**
+     * Gemmer telefonens feed som dens profils fil, og som feed.json, hvis profilen er (eller nu bliver) den aktive.
+     * Rydder billeder, ingen profil længere bruger. Returnerer true, hvis skærmen skal genindlæse.
+     */
+    private boolean write(JSONObject feed, String profile) throws Exception {
         File dir = FeedProvider.dir(app);
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IllegalStateException("ingen feed-mappe");
-        File tmp = new File(dir, "feed.json.tmp");
+        File tmp = new File(dir, "profile-" + profile + ".json.tmp");
         try (OutputStream o = new FileOutputStream(tmp)) { o.write(feed.toString().getBytes(StandardCharsets.UTF_8)); }
-        if (!tmp.renameTo(new File(dir, "feed.json"))) throw new IllegalStateException("kunne ikke gemme feed");
+        if (!tmp.renameTo(Profiles.file(app, profile))) throw new IllegalStateException("kunne ikke gemme feed");
+        boolean active = Profiles.onFeed(app, profile, feed.isNull("name") ? "" : feed.optString("name", "").trim());
         Set<String> keep = new HashSet<>();
-        JSONArray shows = feed.optJSONArray("shows");
-        for (int i = 0; shows != null && i < shows.length(); i++) {
-            String url = Feed.image(shows.getJSONObject(i));   // med rettelserne, så de ikke slettes
-            if (!url.isEmpty()) keep.add(Images.fileName(url));
-        }
-        for (String list : new String[]{"paused", "discover"}) {
-            JSONArray more = feed.optJSONArray(list);
-            for (int i = 0; more != null && i < more.length(); i++) {
-                String url = Feed.image(more.getJSONObject(i));
-                if (!url.isEmpty()) keep.add(Images.fileName(url));
-            }
+        for (String id : Profiles.all(app)) {
+            try {
+                keepImages(new JSONObject(new String(java.nio.file.Files.readAllBytes(Profiles.file(app, id).toPath()), StandardCharsets.UTF_8)), keep);
+            } catch (Exception ignored) { }   // en ulæselig profil må ikke stoppe oprydningen; billederne tages ikke med
         }
         File[] imgs = new File(dir, "img").listFiles();
         if (imgs != null) for (File f : imgs) if (!keep.contains(f.getName())) f.delete();
+        return active;
+    }
+
+    private static void keepImages(JSONObject feed, Set<String> keep) throws Exception {
+        for (String list : new String[]{"shows", "paused", "discover"}) {
+            JSONArray items = feed.optJSONArray(list);
+            for (int i = 0; items != null && i < items.length(); i++) {
+                String url = Feed.image(items.getJSONObject(i));   // med rettelserne, så de ikke slettes
+                if (!url.isEmpty()) keep.add(Images.fileName(url));
+            }
+        }
     }
 
     private static String line(InputStream in) throws Exception {
