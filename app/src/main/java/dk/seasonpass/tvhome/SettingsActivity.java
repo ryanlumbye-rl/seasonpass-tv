@@ -33,10 +33,12 @@ public class SettingsActivity extends Activity {
     private TextView hint;
     private Updater.Info update;
     private boolean checking;
+    private Strings S;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        S = Strings.of(this);
         regular = getResources().getFont(R.font.urbanist_regular);
         semibold = getResources().getFont(R.font.urbanist_semibold);
         bold = getResources().getFont(R.font.urbanist_bold);
@@ -60,23 +62,23 @@ public class SettingsActivity extends Activity {
         col.setPadding(dp(56), dp(40), dp(56), dp(40));
         scroll.addView(col);
 
-        TextView title = text("Indstillinger", 30, bold, FG);
+        TextView title = text(S.t("tvhome.settings"), 30, bold, FG);
         title.setPadding(0, 0, 0, dp(16));
         col.addView(title);
 
-        row("Pauseskærm", saverState(), x -> {
+        row(S.t("tvhome.saver"), saverState(), x -> {
             if (!Prefs.setDream(this, !Prefs.dreamOn(this))) noRight();
             else rebuild();
         });
-        row("Pauseskærmens indhold", Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this)), x -> {
+        row(S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))), x -> {
             Prefs.sp(this).edit().putString("saver_content", Prefs.cycle(Prefs.CONTENT_KEYS, Prefs.content(this))).apply();
             rebuild();
         });
-        row("Ur", Prefs.label(Prefs.CLOCK_KEYS, Prefs.CLOCK_LABELS, Prefs.clock(this)), x -> {
+        row(S.t("tvhome.clock"), S.t(Prefs.label(Prefs.CLOCK_KEYS, Prefs.CLOCK_LABELS, Prefs.clock(this))), x -> {
             Prefs.sp(this).edit().putString("saver_clock", Prefs.cycle(Prefs.CLOCK_KEYS, Prefs.clock(this))).apply();
             rebuild();
         });
-        row("Musik i pauseskærmen", musicState(), x -> {
+        row(S.t("tvhome.music"), musicState(), x -> {
             if (!Prefs.music(this) || !Prefs.listenerOn(this)) {
                 Prefs.sp(this).edit().putBoolean("saver_music", true).apply();
                 if (!Prefs.listenerOn(this)) askListener();
@@ -85,13 +87,13 @@ public class SettingsActivity extends Activity {
             }
             rebuild();
         });
-        row("Prøv pauseskærmen", "", x -> startActivity(new Intent(this, SaverPreviewActivity.class)));
-        row("Opdatering", updateState(), x -> updateClicked());
-        row("Tv'ets indstillinger", "", x -> {
+        row(S.t("tvhome.tryDream"), "", x -> startActivity(new Intent(this, SaverPreviewActivity.class)));
+        row(S.t("tvhome.update"), updateState(), x -> updateClicked());
+        row(S.t("tvhome.tvSettings"), "", x -> {
             try {
                 startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (Exception e) {
-                Toast.makeText(this, "Indstillinger kunne ikke åbnes", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, S.t("tvhome.cantOpen"), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -113,19 +115,19 @@ public class SettingsActivity extends Activity {
 
     private String saverState() {
         if (Prefs.dreamOn(this)) return "SeasonPass";
-        return Prefs.canWriteSecure(this) ? "Tv'ets egen · tryk for at bruge SeasonPass" : "Tv'ets egen";
+        return S.t(Prefs.canWriteSecure(this) ? "tvhome.saverTvTap" : "tvhome.saverTv");
     }
 
     private String musicState() {
-        if (!Prefs.music(this)) return "Fra";
-        return Prefs.listenerOn(this) ? "Til" : "Til · mangler adgang";
+        if (!Prefs.music(this)) return S.t("tvhome.off");
+        return Prefs.listenerOn(this) ? S.t("tvhome.on") : S.t("tvhome.musicMissing");
     }
 
     private String updateState() {
-        if (!Updater.enabled()) return "Version " + Updater.installedVersion(this);
-        if (checking) return "Søger …";
-        if (update != null) return "Opdatér til " + update.version;
-        return "Version " + Updater.installedVersion(this) + " · tryk for at søge";
+        if (!Updater.enabled()) return S.t("tvhome.version", "v", Updater.installedVersion(this));
+        if (checking) return S.t("tvhome.searching");
+        if (update != null) return S.t("tvhome.updateTo", "v", update.version);
+        return S.t("tvhome.versionTap", "v", Updater.installedVersion(this));
     }
 
     /** Adgangen til at se, hvad der spilles, kan kun gives af systemet: tv'ets egen skærm, ellers adb. */
@@ -144,7 +146,7 @@ public class SettingsActivity extends Activity {
 
     private void updateClicked() {
         if (!Updater.enabled()) {
-            Toast.makeText(this, "Opdateringer er ikke slået til i denne version", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, S.t("tvhome.updatesOff"), Toast.LENGTH_SHORT).show();
             return;
         }
         if (checking) return;
@@ -157,13 +159,16 @@ public class SettingsActivity extends Activity {
             try {
                 if (u != null) {
                     Updater.install(this, u);
-                    msg = "Henter og installerer " + u.version + " …";
+                    msg = S.t("tvhome.installing", "v", u.version);
                 } else {
                     found = Updater.check(this);
-                    msg = found == null ? "Du har den nyeste version" : null;
+                    // Samme sted som startskærmen: pillen "Ny version" dér følger med et manuelt tjek.
+                    Prefs.sp(this).edit().putLong("update_checked", System.currentTimeMillis())
+                            .putString("update_version", found == null ? "" : found.version).apply();
+                    msg = found == null ? S.t("tvhome.latest") : null;
                 }
             } catch (Exception e) {
-                msg = "Kunne ikke opdatere: " + e.getMessage();
+                msg = S.t("tvhome.updateFail", "e", String.valueOf(e.getMessage()));
             }
             final String m = msg;
             final Updater.Info f = found;

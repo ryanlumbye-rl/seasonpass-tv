@@ -118,7 +118,7 @@ final class Profiles {
     /** Navnet på profilen til visning: fornavn, ellers "Profil n". */
     static String label(Context c, String id, int index) {
         String n = name(c, id);
-        return n.isEmpty() ? "Profil " + (index + 1) : n;
+        return n.isEmpty() ? Strings.of(c).t("tvhome.profileN", "n", index + 1) : n;
     }
 
     /** Til fejlsøgning. */

@@ -11,9 +11,10 @@ final class Prefs {
     private Prefs() { }
 
     static final String[] CONTENT_KEYS = {"mix", "next", "soon", "discover", "clock"};
-    static final String[] CONTENT_LABELS = {"Blandet", "Dine serier", "Kommer snart", "Opdag serier", "Kun ur"};
+    /** Tekstnøgler (se Strings), ikke tekster: sproget kommer fra telefonen. */
+    static final String[] CONTENT_LABELS = {"tvhome.contentMix", "tvhome.contentNext", "home.soon", "tvhome.discover", "tvhome.contentClock"};
     static final String[] CLOCK_KEYS = {"big", "small", "off"};
-    static final String[] CLOCK_LABELS = {"Stort", "Lille", "Fra"};
+    static final String[] CLOCK_LABELS = {"tvhome.clockBig", "tvhome.clockSmall", "tvhome.off"};
 
     static SharedPreferences sp(Context c) {
         return c.getSharedPreferences("settings", Context.MODE_PRIVATE);

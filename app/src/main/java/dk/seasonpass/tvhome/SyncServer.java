@@ -159,7 +159,7 @@ final class SyncServer {
         String shown = code;
         main.post(() -> {
             if (listener != null) listener.onPairCode(shown);
-            else Toast.makeText(app, "SeasonPass-kode: " + shown, Toast.LENGTH_LONG).show();
+            else Toast.makeText(app, Strings.of(app).t("tvhome.pairCode", "code", shown), Toast.LENGTH_LONG).show();
         });
     }
 

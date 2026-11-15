@@ -47,7 +47,7 @@ public class AppsActivity extends Activity {
         col.setPadding(dp(48), dp(40), dp(48), dp(40));
         scroll.addView(col);
 
-        TextView title = text("Apps", 30, bold);
+        TextView title = text(Strings.of(this).t("tvhome.apps"), 30, bold);
         title.setPadding(0, 0, 0, dp(18));
         col.addView(title);
 
@@ -111,7 +111,7 @@ public class AppsActivity extends Activity {
             Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
             if (i == null) i = pm.getLaunchIntentForPackage(pkg);
             if (i == null) {
-                Toast.makeText(this, "Appen er ikke installeret", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, Strings.of(this).t("tvhome.notInstalled"), Toast.LENGTH_SHORT).show();
                 return;
             }
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));

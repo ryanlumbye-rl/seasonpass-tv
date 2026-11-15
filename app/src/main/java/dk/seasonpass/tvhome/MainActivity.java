@@ -83,7 +83,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private JSONObject currentHero;
     private long feedStamp = -1;
     /** Profilen, rækkerne er bygget for; skifter den, vises navnet kort. */
-    private String shownProfile;
+    private static String shownProfile;   // static: overlever, at skærmen bygges igen ved sprogskifte
+    /** Fjernsynets tekster og sprog (fra den aktive profils feed); skærmen bygges igen, hvis de skifter. */
+    private Strings S;
     /** Feed version 2 som modtaget; rækkerne regnes ud fra den igen, når uret flytter et afsnit. */
     private JSONObject v2;
     private String shownSignature = "";
@@ -130,6 +132,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        S = Strings.of(this);
         light = getResources().getFont(R.font.urbanist_light);
         regular = getResources().getFont(R.font.urbanist_regular);
         medium = getResources().getFont(R.font.urbanist_medium);
@@ -163,7 +166,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private void pickProfile() {
         List<String> ids = Profiles.all(this);
         if (ids.size() < 2) {
-            Toast.makeText(this, "Kun én profil. Parr flere telefoner i SeasonPass for at skifte.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, S.t("tvhome.oneProfile"), Toast.LENGTH_LONG).show();
             return;
         }
         String now = Profiles.active(this);
@@ -172,7 +175,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             labels[i] = (ids.get(i).equals(now) ? "\u2713  " : "     ") + Profiles.label(this, ids.get(i), i);
         }
         new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Hvem ser?")
+                .setTitle(S.t("tvhome.who"))
                 .setItems(labels, (d, which) -> {
                     try { Profiles.select(this, ids.get(which)); } catch (Exception ignored) { }
                     feedStamp = -1;
@@ -220,7 +223,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
 
     private void showUpdatePill(String version) {
         boolean show = !version.isEmpty() && Updater.newer(version, Updater.installedVersion(this));
-        updatePill.setText("Ny version " + version);
+        updatePill.setText(S.t("tvhome.newVersion", "v", version));
         updatePill.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
@@ -229,6 +232,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         long stamp = f.exists() ? f.lastModified() : 0;
         if (stamp != feedStamp) {
             feedStamp = stamp;
+            Strings now = Strings.of(this);
+            if (!now.same(S)) { recreate(); return; }   // en anden profil eller et nyt sprog: byg skærmen med de nye tekster
             loadFeed(f);
         }
     }
@@ -245,10 +250,10 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     public void onPairCode(String code) {
         if (code == null) {
             pairBanner.setVisibility(View.GONE);
-            Toast.makeText(this, "SeasonPass er forbundet", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, S.t("tvhome.paired"), Toast.LENGTH_SHORT).show();
             return;
         }
-        pairBanner.setText("Skriv koden i SeasonPass:  " + code);
+        pairBanner.setText(S.t("tvhome.pairCode", "code", code));
         pairBanner.setVisibility(View.VISIBLE);
         main.postDelayed(() -> pairBanner.setVisibility(View.GONE), 2 * 60 * 1000L);
     }
@@ -352,12 +357,12 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         top.setGravity(Gravity.CENTER_VERTICAL);
         // Vores egen indstillingsside (pauseskærm, musik, opdatering); den fører videre til tv'ets egne indstillinger
         // og dermed udviklerindstillingerne. Nås med Op fra knapperne øverst.
-        TextView settings = pill("Indstillinger", false);
+        TextView settings = pill(S.t("tvhome.settings"), false);
         settings.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13 * unit());
         settings.setPadding(dp(16), dp(7), dp(16), dp(7));
         settings.setOnClickListener(x -> startActivity(new Intent(this, SettingsActivity.class)));
         settings.setOnFocusChangeListener(chain(settings, null));
-        TextView appsPill = pill("Apps", false);
+        TextView appsPill = pill(S.t("tvhome.apps"), false);
         appsPill.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13 * unit());
         appsPill.setPadding(dp(16), dp(7), dp(16), dp(7));
         appsPill.setOnClickListener(x -> openApps());
@@ -428,16 +433,16 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         olp.topMargin = dp(18);
         col.addView(infoOverview, olp);
         LinearLayout buttons = new LinearLayout(this);
-        infoPlay = pill("▶  Afspil", true);
+        infoPlay = pill("▶  " + S.t("tvhome.play"), true);
         infoPlay.setOnClickListener(x -> { JSONObject h = infoItem; closeInfo(); launch(h); });
         infoPlay.setOnFocusChangeListener(chain(infoPlay, null));
-        infoSeen = pill("Har set den", false);
+        infoSeen = pill(S.t("tvhome.seen"), false);
         infoSeen.setOnClickListener(x -> discoverAction(Actions.SEEN));
         infoSeen.setOnFocusChangeListener(chain(infoSeen, null));
-        infoNope = pill("Ikke for mig", false);
+        infoNope = pill(S.t("tvhome.nope"), false);
         infoNope.setOnClickListener(x -> discoverAction(Actions.DISMISS));
         infoNope.setOnFocusChangeListener(chain(infoNope, null));
-        View close = pill("Luk", false);
+        View close = pill(S.t("common.close"), false);
         close.setOnClickListener(x -> closeInfo());
         close.setOnFocusChangeListener(chain(close, null));
         buttons.addView(infoPlay);
@@ -445,7 +450,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         buttons.addView(infoNope, margins(10, 0, 0, 0));
         buttons.addView(close, margins(10, 0, 0, 0));
         col.addView(buttons, margins(0, 26, 0, 0));
-        infoHelp = text("Har set den: du følger den og får besked om nye sæsoner.\nIkke for mig: serien foreslås ikke igen.", 12, light, MUTED);
+        infoHelp = text(S.t("tvhome.help"), 12, light, MUTED);
         infoHelp.setLineSpacing(0, 1.3f);
         col.addView(infoHelp, margins(0, 16, 0, 0));
         p.addView(col);
@@ -471,14 +476,14 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         infoNope.setVisibility(vis);
         infoHelp.setVisibility(vis);
         if (!because.isEmpty()) {
-            infoLine.setText("Fordi du ser " + because);
+            infoLine.setText(S.t("discover.because", "name", because));
             ((TextView) infoPlay).setText("▶  Åbn " + o.optString("service"));
         } else {
             infoLine.setText(season.isEmpty() ? line : season + "  ·  " + line);
-            ((TextView) infoPlay).setText("▶  Afspil");
+            ((TextView) infoPlay).setText("▶  " + S.t("tvhome.play"));
         }
         String ov = o.optString("overview", "");
-        infoOverview.setText(ov.isEmpty() ? "Ingen beskrivelse." : ov);
+        infoOverview.setText(ov.isEmpty() ? S.t("show.noDesc") : ov);
         infoPanel.setVisibility(View.VISIBLE);
         scroll.setVisibility(View.INVISIBLE);   // ellers skinner rækkerne og den lille tekst igennem
         scroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
@@ -490,7 +495,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         JSONObject o = infoItem;
         long tmdb = o == null ? 0 : Actions.tmdbId(o.optString("id"));
         if (tmdb <= 0) {
-            Toast.makeText(this, "Serien kunne ikke gemmes", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, S.t("tvhome.saveFail"), Toast.LENGTH_SHORT).show();
             return;
         }
         String title = o.optString("title");
@@ -498,8 +503,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         infoReturn = dropDiscoverCard(infoReturn);
         closeInfo();
         Toast.makeText(this, Actions.SEEN.equals(kind)
-                ? "Du følger " + title + " i SeasonPass, næste gang telefonen er åben"
-                : title + " foreslås ikke igen", Toast.LENGTH_LONG).show();
+                ? S.t("tvhome.followed", "title", title)
+                : S.t("tvhome.dismissed", "title", title), Toast.LENGTH_LONG).show();
     }
 
     /** Fjerner kortet fra rækken; giver kortet, fokus skal over på, eller null (så skjules rækken). */
@@ -563,9 +568,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         content.addView(heroBlock());
         if (feed == null) {
             heroTitle.setText("SeasonPass");
-            heroLine.setText("Ingen serier endnu");
-            heroOverview.setText("Slå \"Sync til fjernsyn\" til i SeasonPass på telefonen for at sende dine serier hertil.");
-            content.addView(section("Dine apps", appsRow()));
+            heroLine.setText(S.t("tvhome.emptyTitle"));
+            heroOverview.setText(S.t("tvhome.emptyText"));
+            content.addView(section(S.t("tvhome.yourApps"), appsRow()));
             return;
         }
         JSONArray h = feed.optJSONArray("hero");
@@ -577,12 +582,12 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         JSONArray next = feed.optJSONArray("next");
         JSONArray soon = feed.optJSONArray("soon");
         JSONArray paused = feed.optJSONArray("paused");
-        if (next != null && next.length() > 0) content.addView(section("Næste afsnit", cardsRow(next, true)));
-        content.addView(section("Dine apps", appsRow()));
-        if (paused != null && paused.length() > 0) content.addView(section("På pause", pausedRow(paused)));
+        if (next != null && next.length() > 0) content.addView(section(S.t("tvhome.next"), cardsRow(next, true)));
+        content.addView(section(S.t("tvhome.yourApps"), appsRow()));
+        if (paused != null && paused.length() > 0) content.addView(section(S.t("mode.paused"), pausedRow(paused)));
         JSONArray discover = visibleDiscover(feed.optJSONArray("discover"));
-        if (discover != null && discover.length() > 0) content.addView(section("Opdag serier", discoverRow(discover)));
-        if (soon != null && soon.length() > 0) content.addView(section("Kommer snart", cardsRow(soon, false)));
+        if (discover != null && discover.length() > 0) content.addView(section(S.t("tvhome.discover"), discoverRow(discover)));
+        if (soon != null && soon.length() > 0) content.addView(section(S.t("home.soon"), cardsRow(soon, false)));
         buildDots();
         heroIndex = 0;
         if (!heroes.isEmpty()) showHero(heroes.get(0));
@@ -612,9 +617,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setGravity(Gravity.CENTER_VERTICAL);
-        playButton = pill("▶  Afspil", true);
+        playButton = pill("▶  " + S.t("tvhome.play"), true);
         playButton.setOnClickListener(x -> launch(currentHero));
-        View info = pill("Mere info", false);
+        View info = pill(S.t("tvhome.moreInfo"), false);
         info.setOnClickListener(x -> showInfo());
         buttons.addView(playButton);
         LinearLayout.LayoutParams ilp = margins(10, 0, 0, 0);
@@ -662,7 +667,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         String season = o.optString("season", "");
         String line = o.optString("line", "");
         String because = o.optString("because", "");
-        heroLine.setText(!because.isEmpty() ? "Fordi du ser " + because : season.isEmpty() ? line : season + "  ·  " + line);
+        heroLine.setText(!because.isEmpty() ? S.t("discover.because", "name", because) : season.isEmpty() ? line : season + "  ·  " + line);
         heroOverview.setText(o.optString("overview", ""));
         int i = heroes.indexOf(o);
         for (int k = 0; k < dots.getChildCount(); k++) dots.getChildAt(k).setAlpha(k == i ? 1f : 0.3f);
@@ -708,7 +713,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             String sub = ready
-                    ? o.optString("episode") + (o.optInt("count", 1) > 1 ? "  ·  " + o.optInt("count") + " nye" : "") + "  ·  " + o.optString("service")
+                    ? o.optString("episode") + (o.optInt("count", 1) > 1 ? "  ·  " + S.t("tvhome.newCount", "n", o.optInt("count")) : "") + "  ·  " + o.optString("service")
                     : o.optString("when") + "  ·  " + o.optString("episode");
             View c = card(o.optString("title"), sub, o.optString("image", null));
             c.setOnClickListener(x -> launch(o));
@@ -725,7 +730,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             int n = o.optInt("count", 0);
-            String sub = (n > 0 ? n + " at se  ·  " : "") + o.optString("service");
+            String sub = (n > 0 ? S.t("tvhome.toWatch", "n", n) + "  ·  " : "") + o.optString("service");
             View c = card(o.optString("title"), sub, o.optString("image", null));
             c.setOnClickListener(x -> launch(o));
             c.setOnFocusChangeListener(chain(c, (x, has) -> { if (has) restoreHero(); }));
@@ -849,7 +854,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             items.addView(tile, sized(128, 72, 12));
         }
         // Sidste felt: undersiden med alle apps.
-        TextView all = text("Alle apps  ›", 13, semibold, FG);
+        TextView all = text(S.t("tvhome.allApps"), 13, semibold, FG);
         all.setGravity(Gravity.CENTER);
         all.setFocusable(true);
         all.setBackgroundColor(SURFACE);
@@ -914,7 +919,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         if (o == null) return;
         String app = o.optString("app", "");
         if (app.isEmpty() || "null".equals(app)) {
-            Toast.makeText(this, "Ved ikke, hvilken app serien ligger i", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, S.t("tvhome.unknownApp"), Toast.LENGTH_SHORT).show();
             return;
         }
         launchPackage(app);
@@ -929,7 +934,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
         if (i == null) i = pm.getLaunchIntentForPackage(pkg);
         if (i == null) {
-            Toast.makeText(this, "Appen er ikke installeret", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, S.t("tvhome.notInstalled"), Toast.LENGTH_SHORT).show();
             return;
         }
         startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));

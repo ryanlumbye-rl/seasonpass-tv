@@ -203,8 +203,9 @@ final class SaverView extends FrameLayout {
             if (!running) return;
             Date now = new Date();
             clock.setText(new SimpleDateFormat("HH.mm", DA).format(now));
-            String d = new SimpleDateFormat("EEEE d. MMMM", DA).format(now);
-            date.setText(Character.toUpperCase(d.charAt(0)) + d.substring(1));
+            Strings tx = Strings.of(getContext());
+            String d = tx.date("EEEEdMMMM", now.getTime(), java.util.TimeZone.getDefault());
+            date.setText(d.isEmpty() ? d : d.substring(0, d.offsetByCodePoints(0, 1)).toUpperCase(tx.locale) + d.substring(d.offsetByCodePoints(0, 1)));
             main.postDelayed(this, 10000);
         }
     };
@@ -388,6 +389,7 @@ final class SaverView extends FrameLayout {
 
     private List<Slide> slides(JSONArray a, char kind) {
         List<Slide> out = new ArrayList<>();
+        Strings tx = Strings.of(getContext());
         Set<Long> hidden = kind == 'd' ? Actions.hidden(getContext()) : java.util.Collections.<Long>emptySet();
         for (int i = 0; a != null && i < a.length(); i++) {
             JSONObject o = a.optJSONObject(i);
@@ -401,7 +403,7 @@ final class SaverView extends FrameLayout {
             else if (kind == 's') s.line = o.optString("episode") + "  ·  " + o.optString("when");
             else {
                 String because = o.optString("because");
-                s.line = (because.isEmpty() ? "Forslag" : "Fordi du ser " + because) + (service.isEmpty() ? "" : "  ·  " + service);
+                s.line = (because.isEmpty() ? tx.t("tvhome.suggestion") : tx.t("discover.because", "name", because)) + (service.isEmpty() ? "" : "  ·  " + service);
             }
             out.add(s);
         }

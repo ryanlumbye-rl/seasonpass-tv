@@ -53,6 +53,7 @@ final class Feed {
 
     /** Version 2 → version 1-formen (hero, next, soon), regnet ud for tidspunktet `now`. */
     static JSONObject derive(JSONObject v2, long now) throws Exception {
+        Strings tx = new Strings(v2);   // telefonens sprog (dansk, hvis den ikke sender et)
         JSONArray shows = v2.optJSONArray("shows");
         List<JSONObject[]> ready = new ArrayList<>();   // {show, første klare afsnit}
         List<Long> readyKey = new ArrayList<>();
@@ -79,20 +80,20 @@ final class Feed {
                 ready.add(new JSONObject[]{card, first});
                 readyKey.add(first.optLong("ms"));
                 JSONObject h = card(s);
-                h.put("season", "Sæson " + first.optInt("s"));
-                h.put("line", ep(first) + " er klar");
+                h.put("season", tx.t("progress.season", "s", first.optInt("s")));
+                h.put("line", tx.t("tvhome.ready", "ep", ep(first)));
                 h.put("overview", s.optString("overview", ""));
                 heroInfo.put(s.optString("id"), h);
             }
             if (nextUp != null) {
                 JSONObject card = card(s);
                 card.put("episode", ep(nextUp));
-                card.put("when", whenText(nextUp.optLong("ms"), nextUp.optBoolean("timeKnown"), now));
+                card.put("when", whenText(tx, nextUp.optLong("ms"), nextUp.optBoolean("timeKnown"), now));
                 soon.add(new Object[]{card, nextUp, nextUp.optLong("ms")});
                 if (!heroInfo.containsKey(s.optString("id"))) {
                     JSONObject h = card(s);
-                    h.put("season", "Sæson " + nextUp.optInt("s"));
-                    h.put("line", whenText(nextUp.optLong("ms"), nextUp.optBoolean("timeKnown"), now));
+                    h.put("season", tx.t("progress.season", "s", nextUp.optInt("s")));
+                    h.put("line", whenText(tx, nextUp.optLong("ms"), nextUp.optBoolean("timeKnown"), now));
                     h.put("overview", s.optString("overview", ""));
                     heroInfo.put(s.optString("id"), h);
                 }
@@ -170,37 +171,32 @@ final class Feed {
         return "S" + e.optInt("s") + " E" + (e.has("n") && !e.isNull("n") ? e.optInt("n") : "?");
     }
 
-    /** Samme danske tekster som SeasonPass' whenText (src/time.ts). */
-    static String whenText(long ms, boolean timeKnown, long now) {
-        int d = dayDiff(now, ms);
-        String t = timeKnown ? " kl. " + fmt("HH:mm", ms) : "";
-        if (ms <= now && timeKnown) return "Klar nu";
-        if (d == 0) return "I dag" + t;
-        if (d == 1) return "I morgen" + t;
-        if (d > 1 && d < 7) {
-            String w = fmt("EEEE", ms);
-            return Character.toUpperCase(w.charAt(0)) + w.substring(1) + t;
-        }
-        return fmt("d. MMM", ms) + t;
+    /** Samme tekster som SeasonPass' whenText (src/time.ts), på telefonens sprog og i dens tidszone. */
+    static String whenText(Strings tx, long ms, boolean timeKnown, long now) {
+        int d = dayDiff(tx.tz, now, ms);
+        String clock = timeKnown ? tx.date("Hm", ms, tx.tz).replace('.', ':') : null;
+        if (ms <= now && timeKnown) return tx.t("time.readyNow");
+        String day;
+        if (d == 0) day = tx.t("time.today");
+        else if (d == 1) day = tx.t("time.tomorrow");
+        else if (d > 1 && d < 7) {
+            String w = tx.date("EEEE", ms, tx.tz);
+            day = w.isEmpty() ? w : w.substring(0, w.offsetByCodePoints(0, 1)).toUpperCase(tx.locale) + w.substring(w.offsetByCodePoints(0, 1));
+        } else day = tx.date("dMMM", ms, tx.tz);
+        return clock == null ? day : tx.t("time.withTime", "day", day, "time", clock);
     }
 
-    private static int dayDiff(long from, long to) {
-        return Math.round((startOfDay(to) - startOfDay(from)) / (float) DAY);
+    private static int dayDiff(TimeZone tz, long from, long to) {
+        return Math.round((startOfDay(tz, to) - startOfDay(tz, from)) / (float) DAY);
     }
 
-    private static long startOfDay(long ms) {
-        Calendar c = Calendar.getInstance(CPH);
+    private static long startOfDay(TimeZone tz, long ms) {
+        Calendar c = Calendar.getInstance(tz);
         c.setTimeInMillis(ms);
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         return c.getTimeInMillis();
-    }
-
-    private static String fmt(String pattern, long ms) {
-        SimpleDateFormat f = new SimpleDateFormat(pattern, DA);
-        f.setTimeZone(CPH);
-        return f.format(new Date(ms));
     }
 }
