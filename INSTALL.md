@@ -1,76 +1,78 @@
+*English · [Dansk](INSTALL.da.md)*
+
 # SeasonPass TV – installation
 
-SeasonPass TV er en lille startskærm til Android TV: stor serie øverst, Næste afsnit, Dine apps, På pause, Opdag serier og
-Kommer snart. Serierne kommer fra SeasonPass-appen på din telefon over Wi-Fi. Appen går ikke på nettet andet end til billeder
+SeasonPass TV is a small home screen for Android TV: a big show on top, Next episode, Your apps, Paused, Discover series and
+Coming soon. The shows come from the SeasonPass app on your phone over Wi-Fi. The app does not go online except to fetch images
 (TMDB/TVmaze).
 
-Ny version ændrer ikke på noget uden dig: alt nedenfor kan fortrydes med `undo-home.sh`.
+A new version changes nothing without you: everything below can be undone with `undo-home.sh`.
 
-## Du skal bruge
+## You need
 
-- Et Android TV (Android 8 eller nyere) og SeasonPass på telefonen (Indstillinger → Fjernsyn).
-- En computer på samme netværk med **adb** (Android platform-tools) og en bash-terminal (macOS, Linux, Windows med Git Bash/WSL).
-- Ca. 10 minutter.
+- An Android TV (Android 8 or newer) and SeasonPass on your phone (Settings → TV).
+- A computer on the same network with **adb** (Android platform-tools) and a bash terminal (macOS, Linux, Windows with Git Bash/WSL).
+- About 10 minutes.
 
-## Tre trin
+## Three steps
 
-**1. Slå fejlfinding til på tv'et**
-Indstillinger → Enhedsindstillinger → Om → tryk 7 gange på "Build" (så er udviklertilstand slået til).
-Gå så til Indstillinger → Enhedsindstillinger → Udviklerindstillinger → slå **USB-fejlfinding** (eller "Netværksfejlfinding") til.
-Notér tv'ets IP-adresse (Indstillinger → Netværk).
+**1. Turn on debugging on the TV**
+Settings → Device Preferences → About → press "Build" 7 times (this turns on developer mode).
+Then go to Settings → Device Preferences → Developer options → turn on **USB debugging** (or "Network debugging").
+Note the TV's IP address (Settings → Network).
 
-**2. Hent og kør installeren**
+**2. Download and run the installer**
 ```bash
-# i mappen med install.sh, lib.sh og SeasonPass-TV.apk
+# in the folder with install.sh, lib.sh and SeasonPass-TV.apk
 ./install.sh 192.168.x.y
 ```
-Første gang spørger tv'et "Tillad USB-fejlfinding?": vælg **Tillad**. Scriptet viser, hvad det vil gøre, og spørger før det starter.
+The first time, the TV asks "Allow USB debugging?": choose **Allow**. The script shows what it will do and asks before it starts.
 
-Vil du kun prøve appen uden at ændre tv'ets startskærm: `./install.sh 192.168.x.y --no-home`. Den åbnes så fra app-listen.
+If you only want to try the app without changing the TV's home screen: `./install.sh 192.168.x.y --no-home`. It is then opened from the app list.
 
-**3. Par med telefonen**
-Åbn SeasonPass på telefonen → Indstillinger → Fjernsyn. Skriv koden på fire cifre, tv'et viser.
+**3. Pair with your phone**
+Open SeasonPass on your phone → Settings → TV. Enter the four-digit code the TV shows.
 
-## Hvad scriptet gør (fuld setup)
+## What the script does (full setup)
 
-1. Installerer appen (`pm install`).
-2. Gør den til tv'ets Home (`cmd package set-home-activity`).
-3. Slår Googles startskærm fra (`pm disable-user`), fordi den ellers vinder over Home. Den afinstalleres ikke.
-4. Slår hjælperen `PowerOnService` til. Det er en tilgængelighedstjeneste, der kun ser, hvornår tv'ets egen Live TV åbner ved tænding, og sender tilbage til SeasonPass. Den læser ingen taster eller tekst.
+1. Installs the app (`pm install`).
+2. Makes it the TV's Home (`cmd package set-home-activity`).
+3. Turns off Google's home screen (`pm disable-user`), because it would otherwise win over Home. It is not uninstalled.
+4. Turns on the helper `PowerOnService`. It is an accessibility service that only sees when the TV's own Live TV opens at power-on and sends you back to SeasonPass. It reads no keys or text.
 
-## Pauseskærm, ur og musik
+## Screensaver, clock and music
 
-`install.sh` vælger SeasonPass som tv'ets pauseskærm: serierne som slideshow, et stort ur og dato. Spiller du musik i Spotify-appen
-på tv'et, viser pauseskærmen en lille boks med nummer og kunstner (appen læser kun, hvad der spilles; ingen notifikationer).
+`install.sh` selects SeasonPass as the TV's screensaver: your shows as a slideshow, a big clock and the date. If you play music in the Spotify app
+on the TV, the screensaver shows a small box with the track and artist (the app only reads what is playing; no notifications).
 
-Alt kan vælges under **Indstillinger** øverst til højre på forsiden: indhold (blandet, dine serier, kommende, opdag serier eller kun ur),
-uret (stort, lille, fra), musik til/fra og "Prøv pauseskærmen". Installeren giver appen to ting: `WRITE_SECURE_SETTINGS`, så Indstillinger selv kan skifte pauseskærm,
-og godkendelsen som notifikationslytter (`cmd notification allow_listener`), som Android kræver for at se, hvad der spilles. Den sidste kan kun gives med adb. Musik læses kun fra apps, der spiller på selve tv'et; spiller du
-fra telefonen over Spotify Connect, kan tv'et ikke se det.
+Everything can be chosen under **Settings** at the top right of the home screen: content (mixed, your shows, upcoming, discover series or clock only),
+the clock (large, small, off), music on/off and "Try the screensaver". The installer gives the app two things: `WRITE_SECURE_SETTINGS`, so Settings can switch the screensaver itself,
+and the approval as a notification listener (`cmd notification allow_listener`), which Android requires to see what is playing. The latter can only be granted with adb. Music is only read from apps that play on the TV itself; if you
+play from your phone over Spotify Connect, the TV cannot see it.
 
-## Fortryd
+## Undo
 
 ```bash
-./undo-home.sh 192.168.x.y             # Googles startskærm tilbage
-./undo-home.sh 192.168.x.y --uninstall # og fjern SeasonPass
+./undo-home.sh 192.168.x.y             # Google's home screen back
+./undo-home.sh 192.168.x.y --uninstall # and remove SeasonPass
 ```
-Uden computer: afinstallér SeasonPass under Indstillinger → Apps. Hvis Googles startskærm ikke vender tilbage:
-Apps → Vis systemapps → Android TV Home → Slå til.
+Without a computer: uninstall SeasonPass under Settings → Apps. If Google's home screen does not come back:
+Apps → Show system apps → Android TV Home → Enable.
 
-## Opdatér
+## Update
 
-Tv'et giver besked med en pille "Ny version" øverst, og under Indstillinger → Opdatering kan du hente og installere den. Appen tjekker kontrolsummen, og Android tillader kun en opdatering, der er signeret med samme nøgle.
-Ved du hellere vil gøre det selv:
+The TV shows a "New version" pill at the top, and under Settings → Update you can download and install it. The app checks the checksum, and Android only allows an update signed with the same key.
+If you would rather do it yourself:
 
-Kør `./install.sh` igen med den nye APK. Appen er signeret med samme nøgle hver gang, så parring og data bliver.
+Run `./install.sh` again with the new APK. The app is signed with the same key every time, so pairing and data stay.
 
-## Fejl
+## Troubleshooting
 
-- *Fik ikke forbindelse*: tv og computer på samme netværk? USB-fejlfinding slået til? Tryk Tillad på tv'et.
-- *UPDATE_INCOMPATIBLE*: der ligger en SeasonPass-app med en anden signering. Kør med `--reinstall` og par igen.
-- *Tv'et starter i Live TV*: vent et par sekunder; hjælperen sender tilbage. Er den slået fra, så kør `install.sh` igen.
-- Bygget fra kilden uden release-nøgle bliver APK'en signeret med debug-nøglen og kan ikke opdatere en udgivet APK.
+- *Could not connect*: are the TV and computer on the same network? Is USB debugging turned on? Press Allow on the TV.
+- *UPDATE_INCOMPATIBLE*: there is a SeasonPass app signed with a different key. Run with `--reinstall` and pair again.
+- *The TV starts in Live TV*: wait a few seconds; the helper sends you back. If it is turned off, run `install.sh` again.
+- Built from source without a release key, the APK is signed with the debug key and cannot update a published APK.
 
-## For udviklere: byg selv
+## For developers: build it yourself
 
-Kun hvis du vil ændre koden og lave din egen APK. Se afsnittet "For udviklere" i [README.md](README.md).
+Only if you want to change the code and make your own APK. See the "For developers" section in [README.md](README.md).

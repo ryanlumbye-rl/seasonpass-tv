@@ -1,46 +1,59 @@
+*English · [Dansk](README.da.md)*
+
 # SeasonPass TV
 
-En startskærm til Android TV, der viser dine serier: stor serie øverst, **Næste afsnit**, **Dine apps**, **På pause**, **Opdag serier**
-og **Kommer snart**. Den har også en pauseskærm med serie-slideshow, stort ur og det, der spilles i Spotify.
+A home screen for Android TV that shows your shows: a big show on top, **Next episode**, **Your apps**, **Paused**, **Discover series**
+and **Coming soon**. It also has a screensaver with a slideshow of your shows, a big clock and what is playing in Spotify.
 
-> **Kræver SeasonPass-appen på din telefon.** SeasonPass TV er kun den ene halvdel: det er telefonappen, der kender dine serier og sender dem
-> til tv'et over Wi-Fi. SeasonPass-appen er et separat projekt og ikke en del af dette repo. Uden den viser tv'et kun dine apps og en tom serieliste.
+> **Requires the SeasonPass app on your phone.** SeasonPass TV is only one half: the phone app knows your shows and sends them
+> to the TV over Wi-Fi. The SeasonPass app is a separate project and not part of this repo. Without it the TV only shows your apps and an empty list of shows.
 
-## Det kan den
+![The home screen: a big show on top, then Next episode and Your apps](docs/screenshots/home.jpg)
 
-- Viser næste afsnit af dine serier og regner selv ud, hvornår et nyt afsnit er udkommet, også når telefonen er slukket.
-- **Opdag serier** med forslag ud fra det, du ser, og knapperne *Har set den* og *Ikke for mig*, som telefonen henter og følger op på.
-- **Pauseskærm** med serierne som slideshow (cirkel-overgang med blød kant og stille zoom), stort ur og en lille boks med det, der spilles i Spotify-appen på tv'et.
-- **Indstillinger** på tv'et: pauseskærmens indhold, ur, musik og opdatering. Avataren viser forbogstavet af dit navn fra telefonen.
-- Giver besked om en ny version og kan opdatere sig selv (hentet fra GitHub, med kontrolsum).
-- Kan gøres til tv'ets startskærm og fortrydes igen. Lille: ca. 150 KB, ingen afhængigheder.
+| | |
+|---|---|
+| ![Your apps, Paused and Discover series](docs/screenshots/apps-discover.jpg) | ![Discover series and Coming soon](docs/screenshots/discover-coming-soon.jpg) |
+| Scroll down: **Your apps**, **Paused** and **Discover series**. | **Discover series** and **Coming soon**. |
 
-## Det skal du bruge
+![The screensaver: a show, a big clock and the date](docs/screenshots/screensaver.jpg)
 
-1. Et **Android TV** (Android 8 eller nyere).
-2. **SeasonPass-appen** på telefonen.
-3. En **computer** til selve installationen, én gang (Mac, Linux eller Windows med Git Bash/WSL). Det tager ca. 10 minutter.
+The screenshots show the English version. The TV follows the language of the SeasonPass app on your phone (eight languages).
 
-## Installér
+## What it does
 
-Hent `SeasonPass-TV.apk`, `install.sh`, `lib.sh` og `undo-home.sh` fra [seneste udgivelse](https://github.com/ryanlumbye-rl/seasonpass-tv/releases/latest)
-og læg dem i samme mappe. Slå USB-fejlfinding til på tv'et, kør `./install.sh <tv-ip>`, og par med telefonen.
-Trin for trin: **[INSTALL.md](INSTALL.md)**.
+- Shows the next episode of your shows and works out by itself when a new episode is out, even when your phone is off.
+- **Discover series** with suggestions based on what you watch, and the buttons *Seen it* and *Not for me*, which the phone picks up and acts on.
+- **Screensaver** with your shows as a slideshow (circle transition with a soft edge and a slow zoom), a big clock and a small box with what is playing in the Spotify app on the TV.
+- **Settings** on the TV: screensaver content, clock, music and updates. The avatar shows the first letter of your name from the phone. Choose which of your apps appear on the home screen (hold OK on an app).
+- Tells you when there is a new version and can update itself (downloaded from GitHub, with a checksum).
+- Can be made the TV's home screen and undone again. Small: about 150 KB, no dependencies.
 
-## Licens og kreditering
+## What you need
 
-MIT, se [LICENSE](LICENSE). Tredjepart og kreditering (Urbanist, TMDB, TVmaze): [THIRD_PARTY.md](THIRD_PARTY.md).
+1. An **Android TV** (Android 8 or newer).
+2. The **SeasonPass app** on your phone.
+3. A **computer** for the install, once (Mac, Linux, or Windows with Git Bash/WSL). It takes about 10 minutes.
+
+## Install
+
+Download `SeasonPass-TV.apk`, `install.sh`, `lib.sh` and `undo-home.sh` from the [latest release](https://github.com/ryanlumbye-rl/seasonpass-tv/releases/latest)
+and put them in the same folder. Turn on USB debugging on the TV, run `./install.sh <tv-ip>`, and pair with your phone.
+Step by step: **[INSTALL.md](INSTALL.md)**.
+
+## License and credits
+
+MIT, see [LICENSE](LICENSE). Third parties and credits (Urbanist, TMDB, TVmaze): [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ---
 
-## For udviklere (kan springes over)
+## For developers (you can skip this)
 
-Det her er kun for dig, der vil ændre i koden og lave din egen APK. Hvis du bare vil bruge appen, er du færdig ovenfor.
+This is only for you if you want to change the code and make your own APK. If you just want to use the app, you are done above.
 
 ```bash
-./gradlew assembleRelease        # kræver JDK 17+ og Android SDK (sdk.dir i local.properties)
+./gradlew assembleRelease        # needs JDK 17+ and the Android SDK (sdk.dir in local.properties)
 ```
 
-APK'en ender i `app/build/outputs/apk/release/`. Uden en egen signeringsnøgle signeres den med en debug-nøgle, og så kan den ikke
-opdatere den udgivne APK (Android kræver samme nøgle). `./release.sh` laver en signeret APK til udgivelse og kræver en nøgle uden for repoet
-(`~/.seasonpass-keys/`). Under udvikling er det nemmeste `TV_HOST=<tv-ip> ./set-home.sh`, der bygger og installerer i ét hug.
+The APK ends up in `app/build/outputs/apk/release/`. Without your own signing key it is signed with a debug key, and then it cannot
+update the published APK (Android requires the same key). `./release.sh` makes a signed APK for release and needs a key outside the repo
+(`~/.seasonpass-keys/`). While developing, the easiest is `TV_HOST=<tv-ip> ./set-home.sh`, which builds and installs in one go.

@@ -755,7 +755,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             t.setSingleLine(true);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             String because = o.optString("because", "");
-            String sub = (because.isEmpty() ? "" : "Fordi du ser " + because + "  ·  ") + o.optString("service");
+            String sub = (because.isEmpty() ? "" : S.t("discover.because", "name", because) + "  ·  ") + o.optString("service");
             TextView s = text(sub, 12, medium, MUTED);
             s.setSingleLine(true);
             s.setEllipsize(android.text.TextUtils.TruncateAt.END);

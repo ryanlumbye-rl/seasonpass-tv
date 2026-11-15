@@ -1,8 +1,10 @@
-# Tredjepart
+*English · [Dansk](THIRD_PARTY.da.md)*
 
-- **Urbanist** (skrifttypen i appen): Copyright 2020 The Urbanist Project Authors (Corey Hu), SIL Open Font License 1.1.
-  Licens: https://openfontlicense.org/ · Kilde: https://github.com/coreyhu/Urbanist
-- **Billeder og serieoplysninger** kommer fra SeasonPass-appen på telefonen og hentes fra TMDB og TVmaze.
-  *This product uses the TMDB API but is not endorsed or certified by TMDB.* Billeder og tekster tilhører deres rettighedshavere.
-  Tjenestelogoer i "Dine apps" er de installerede apps' egne bannere.
-- Netflix, Disney+, Prime Video, Spotify m.fl. er varemærker tilhørende deres ejere. Dette projekt er ikke tilknyttet dem.
+# Third parties
+
+- **Urbanist** (the typeface in the app): Copyright 2020 The Urbanist Project Authors (Corey Hu), SIL Open Font License 1.1.
+  License: https://openfontlicense.org/ · Source: https://github.com/coreyhu/Urbanist
+- **Images and show information** come from the SeasonPass app on the phone and are fetched from TMDB and TVmaze.
+  *This product uses the TMDB API but is not endorsed or certified by TMDB.* Images and texts belong to their rights holders.
+  The service logos under "Your apps" are the installed apps' own banners.
+- Netflix, Disney+, Prime Video, Spotify and others are trademarks of their owners. This project is not affiliated with them.
