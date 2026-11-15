@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="power_on_label">SeasonPass: start på Home</string>
+    <string name="power_on_description">Når tv\'et tænder og selv åbner Live TV, sendes det tilbage til startskærmen. Ser kun Live TV-appen.</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Udtrykkeligt uigennemsigtig: på nogle firmwares bliver DeviceDefault gennemsigtig, og så kører
+         tv-appen videre under startskærmen (CleanYourTV PROMPT.md). -->
+    <style name="Home" parent="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSwipeToDismiss">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:colorAccent">#F2F1EC</item>
+    </style>
+</resources>

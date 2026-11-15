@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <!-- Sync til fjernsyn (25-10-2026): telefonen sender over Wi-Fi (SyncServer), og billederne hentes
+         fra TMDB/TVmaze (Images). Før det gik appen aldrig på nettet. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Ny version (Updater) lægger en opdatering ind over appen selv. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Gives kun med adb (`pm grant`, gør install.sh): så appen selv kan vælge sig som pauseskærm og slå musikadgangen til. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Android 11+: uden dette skjuler pakkesynligheden alle apps, og "Dine apps" bliver tom. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
+    </queries>
+
+    <application
+        android:label="SeasonPass"
+        android:icon="@drawable/banner"
+        android:banner="@drawable/banner"
+        android:theme="@style/Home"
+        android:allowBackup="false"
+        tools:ignore="MissingApplicationIcon">
+
+        <!-- Home siden 25-10-2026. Googles startskærm forbliver slået til som reserve; tv-home/undo-home.sh
+             giver Home tilbage til den. singleTask: Home-knappen genbruger skærmen i stedet for at stable nye. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Undersiden "Apps": alle apps i et gitter. Åbnes fra forsiden, ikke fra app-listen. -->
+        <activity
+            android:name=".AppsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Home"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Home"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
+        <activity
+            android:name=".SaverPreviewActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Home"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
+        <!-- Pauseskærm: slideshow, ur og spiller nu. Vælges i Indstillinger (eller af install.sh). -->
+        <service
+            android:name=".SeasonDream"
+            android:label="SeasonPass"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- Giver lov til at se, hvad der spilles i Spotify m.fl.; læser ingen notifikationer. -->
+        <service
+            android:name=".MediaListener"
+            android:label="SeasonPass"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".UpdateReceiver" android:exported="false" />
+
+        <!-- Sender firmwarens egen Live TV ved tænding tilbage til Home; se PowerOnService. -->
+        <service
+            android:name=".PowerOnService"
+            android:label="@string/power_on_label"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/power_on_service" />
+        </service>
+
+        <!-- Mac'en skriver feed.json og billederne herind med `content write`. WRITE_SECURE_SETTINGS:
+             adb-shellen har den, almindelige apps kan ikke få den (samme greb som CleanYourTV's ThemeProvider). -->
+        <provider
+            android:name=".FeedProvider"
+            android:authorities="dk.seasonpass.tvhome.feed"
+            android:exported="true"
+            android:permission="android.permission.WRITE_SECURE_SETTINGS" />
+    </application>
+</manifest>

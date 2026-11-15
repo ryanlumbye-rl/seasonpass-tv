@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+// SeasonPass-startskærmen (25-10-2026). Ren Java uden afhængigheder. Indholdet kommer fra telefonen
+// (SyncServer) eller Mac'en (FeedProvider); INTERNET bruges kun til modtageren og billederne.
+// Release-signering: nøglen ligger uden for repoet (standard ~/.seasonpass-keys/keystore.properties, eller stien i
+// SEASONPASS_KEYSTORE_PROPS). Findes den ikke, signeres med debug-nøglen, så andre kan bygge fra kilden.
+def keyProps = new Properties()
+def keyFile = new File(System.getenv('SEASONPASS_KEYSTORE_PROPS') ?: "${System.getProperty('user.home')}/.seasonpass-keys/keystore.properties")
+if (keyFile.exists()) keyFile.withInputStream { keyProps.load(it) }
+
+android {
+    namespace 'dk.seasonpass.tvhome'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'dk.seasonpass.tvhome'
+        minSdk 26
+        targetSdk 34
+        versionCode 3
+        versionName '0.3.0'
+    }
+
+    signingConfigs {
+        if (keyFile.exists()) {
+            release {
+                storeFile file(keyProps['storeFile'])
+                storePassword keyProps['storePassword']
+                keyAlias keyProps['keyAlias']
+                keyPassword keyProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            signingConfig keyFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

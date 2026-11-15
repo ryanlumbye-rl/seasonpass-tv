@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 320x180 banner i app-listen: SeasonPass' mørke grund med en lys, afrundet "pas"-form. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0E0E10" />
+            <size android:width="320dp" android:height="180dp" />
+        </shape>
+    </item>
+    <item android:left="120dp" android:right="120dp" android:top="50dp" android:bottom="50dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <solid android:color="#F2F1EC" />
+        </shape>
+    </item>
+    <item android:left="136dp" android:right="136dp" android:top="78dp" android:bottom="78dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" />
+            <solid android:color="#0E0E10" />
+        </shape>
+    </item>
+</layer-list>
