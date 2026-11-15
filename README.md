@@ -27,6 +27,7 @@ The screenshots show the English version. The TV follows the language of the Sea
 - **Settings** on the TV: screensaver content, clock, music and updates. The avatar shows the first letter of your name from the phone. Choose which of your apps appear on the home screen (hold OK on an app).
 - Tells you when there is a new version and can update itself (downloaded from GitHub, with a checksum).
 - Can be made the TV's home screen and undone again. Small: about 150 KB, no dependencies.
+- The install scripts speak eight languages (English, Danish, Swedish, Norwegian, Finnish, Icelandic, Faroese, Greenlandic), chosen from your computer's language or with `--lang`.
 
 ## What you need
 

@@ -16,6 +16,7 @@ og **Kommer snart**. Den har også en pauseskærm med serie-slideshow, stort ur 
 - **Indstillinger** på tv'et: pauseskærmens indhold, ur, musik og opdatering. Avataren viser forbogstavet af dit navn fra telefonen.
 - Giver besked om en ny version og kan opdatere sig selv (hentet fra GitHub, med kontrolsum).
 - Kan gøres til tv'ets startskærm og fortrydes igen. Lille: ca. 150 KB, ingen afhængigheder.
+- Installationsscriptene taler otte sprog (engelsk, dansk, svensk, norsk, finsk, islandsk, færøsk, grønlandsk), valgt efter computerens sprog eller med `--lang`.
 
 ## Det skal du bruge
 

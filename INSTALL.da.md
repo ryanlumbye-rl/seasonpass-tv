@@ -28,6 +28,8 @@ Notér tv'ets IP-adresse (Indstillinger → Netværk).
 ```
 Første gang spørger tv'et "Tillad USB-fejlfinding?": vælg **Tillad**. Scriptet viser, hvad det vil gøre, og spørger før det starter.
 
+Scriptet taler computerens sprog (engelsk, dansk, svensk, norsk, finsk, islandsk, færøsk eller grønlandsk; ellers engelsk). Vælg selv med `--lang`, fx `./install.sh 192.168.x.y --lang da`. De finske, islandske, færøske og grønlandske tekster er udkast, som ikke er læst igennem af en indfødt.
+
 Vil du kun prøve appen uden at ændre tv'ets startskærm: `./install.sh 192.168.x.y --no-home`. Den åbnes så fra app-listen.
 
 **3. Par med telefonen**

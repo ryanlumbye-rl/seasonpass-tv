@@ -28,6 +28,8 @@ Note the TV's IP address (Settings → Network).
 ```
 The first time, the TV asks "Allow USB debugging?": choose **Allow**. The script shows what it will do and asks before it starts.
 
+The script speaks the language of your computer (English, Danish, Swedish, Norwegian, Finnish, Icelandic, Faroese or Greenlandic; English otherwise). Choose one with `--lang`, for example `./install.sh 192.168.x.y --lang sv`. The Finnish, Icelandic, Faroese and Greenlandic texts are drafts that have not been read by a native speaker.
+
 If you only want to try the app without changing the TV's home screen: `./install.sh 192.168.x.y --no-home`. It is then opened from the app list.
 
 **3. Pair with your phone**
