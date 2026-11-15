@@ -59,6 +59,9 @@ Apps → Vis systemapps → Android TV Home → Slå til.
 
 ## Opdatér
 
+Tv'et giver besked med en pille "Ny version" øverst, og under Indstillinger → Opdatering kan du hente og installere den. Appen tjekker kontrolsummen, og Android tillader kun en opdatering, der er signeret med samme nøgle.
+Ved du hellere vil gøre det selv:
+
 Kør `./install.sh` igen med den nye APK. Appen er signeret med samme nøgle hver gang, så parring og data bliver.
 
 ## Fejl
@@ -68,9 +71,6 @@ Kør `./install.sh` igen med den nye APK. Appen er signeret med samme nøgle hve
 - *Tv'et starter i Live TV*: vent et par sekunder; hjælperen sender tilbage. Er den slået fra, så kør `install.sh` igen.
 - Bygget fra kilden uden release-nøgle bliver APK'en signeret med debug-nøglen og kan ikke opdatere en udgivet APK.
 
-## Byg selv
+## For udviklere: byg selv
 
-```bash
-./gradlew assembleRelease     # kræver JDK 17+ og Android SDK (sdk.dir i local.properties)
-```
-`./release.sh` laver den signerede APK til udgivelse og kræver release-nøglen (`~/.seasonpass-keys/`, ikke i git).
+Kun hvis du vil ændre koden og lave din egen APK. Se afsnittet "For udviklere" i [README.md](README.md).

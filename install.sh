@@ -67,6 +67,10 @@ if echo "$OUT" | grep -q "UPDATE_INCOMPATIBLE"; then
 fi
 echo "$OUT" | grep -q Success || { echo "Installationen fejlede." >&2; exit 1; }
 
+# Appen må installere sine egne opdateringer uden et ekstra spørgsmål på tv'et. Android lader den kun lægge en APK oven på sig selv,
+# og kun hvis den er signeret med samme nøgle; andre apps kan den ikke installere.
+$ADB shell "appops set $PKG REQUEST_INSTALL_PACKAGES allow" >/dev/null 2>&1 || true
+
 # Én tilladelse, som kun adb kan give: så kan appen selv skifte pauseskærm og musikadgang i Indstillinger.
 $ADB shell "pm grant $PKG android.permission.WRITE_SECURE_SETTINGS" >/dev/null 2>&1 || echo "Advarsel: kunne ikke give WRITE_SECURE_SETTINGS (pauseskærmen skal så vælges i tv'ets egne indstillinger)." >&2
 
