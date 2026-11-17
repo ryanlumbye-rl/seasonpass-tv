@@ -141,8 +141,12 @@ final class SaverView extends FrameLayout {
         newsLine.setEllipsize(android.text.TextUtils.TruncateAt.END);
         newsBox.addView(newsLabel);
         newsBox.addView(newsLine, margins(0, 3, 0, 0));
-        newsBox.setVisibility(GONE);
-        if (news) col.addView(newsBox, margins(0, 20, 0, 0));
+        newsBox.setVisibility(INVISIBLE);   // pladsen er reserveret hele tiden, så uret aldrig flytter sig, når en overskrift fylder to linjer
+        if (news) {
+            LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(62));   // mærke + to linjer
+            nlp.topMargin = dp(18);
+            col.addView(newsBox, nlp);
+        }
         FrameLayout.LayoutParams cl = new LayoutParams(dp(onlyClock ? 840 : 456), ViewGroup.LayoutParams.WRAP_CONTENT,
                 onlyClock ? Gravity.CENTER : Gravity.BOTTOM | Gravity.START);
         if (onlyClock) col.setGravity(Gravity.CENTER_HORIZONTAL);
