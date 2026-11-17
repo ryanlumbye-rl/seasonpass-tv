@@ -143,7 +143,7 @@ final class SaverView extends FrameLayout {
         newsBox.addView(newsLine, margins(0, 3, 0, 0));
         newsBox.setVisibility(GONE);
         if (news) col.addView(newsBox, margins(0, 20, 0, 0));
-        FrameLayout.LayoutParams cl = new LayoutParams(dp(onlyClock ? 840 : 560), ViewGroup.LayoutParams.WRAP_CONTENT,
+        FrameLayout.LayoutParams cl = new LayoutParams(dp(onlyClock ? 840 : 456), ViewGroup.LayoutParams.WRAP_CONTENT,
                 onlyClock ? Gravity.CENTER : Gravity.BOTTOM | Gravity.START);
         if (onlyClock) col.setGravity(Gravity.CENTER_HORIZONTAL);
         else cl.setMargins(dp(56), 0, 0, dp(46));
@@ -155,45 +155,43 @@ final class SaverView extends FrameLayout {
         LinearLayout t = new LinearLayout(c);
         t.setGravity(Gravity.CENTER_VERTICAL);
         GradientDrawable tb = new GradientDrawable();
-        tb.setCornerRadius(dp(22));
+        tb.setCornerRadius(dp(18));
         tb.setColor(0xB30A0A0C);
         tb.setStroke(Math.max(1, dp(1)), 0x1FF2F1EC);
         t.setBackground(tb);
-        t.setPadding(dp(16), dp(16), dp(28), dp(16));
+        t.setPadding(dp(16), dp(16), dp(20), dp(16));
         trackArt = new ImageView(c);
         trackArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
         trackArt.setClipToOutline(true);
         trackArt.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(12)); }
         });
-        t.addView(trackArt, new LinearLayout.LayoutParams(dp(132), dp(132)));
+        t.addView(trackArt, new LinearLayout.LayoutParams(dp(76), dp(76)));
         LinearLayout tx = new LinearLayout(c);
         tx.setOrientation(LinearLayout.VERTICAL);
-        trackSource = text("", 12, semibold, MUTED);
+        trackSource = text("", 10, semibold, MUTED);
         trackSource.setLetterSpacing(0.12f);
         trackSource.setSingleLine(true);
-        trackTitle = text("", 28, bold, FG);
+        trackTitle = text("", 20, bold, FG);
         trackTitle.setSingleLine(true);
         trackTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         trackTitle.setLetterSpacing(-0.01f);
-        trackArtist = text("", 19, regular, MUTED);
+        trackArtist = text("", 14, regular, MUTED);
         trackArtist.setSingleLine(true);
         trackArtist.setEllipsize(android.text.TextUtils.TruncateAt.END);
         trackLine = new ProgressLine(c);
         tx.addView(trackSource);
-        tx.addView(trackTitle, margins(0, 6, 0, 0));
-        tx.addView(trackArtist, margins(0, 3, 0, 0));
+        tx.addView(trackTitle, margins(0, 4, 0, 0));
+        tx.addView(trackArtist, margins(0, 2, 0, 0));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(3, dp(4)));
-        lp.topMargin = dp(16);
+        lp.topMargin = dp(10);
         tx.addView(trackLine, lp);
-        trackTitle.setMaxWidth(dp(330));
-        trackArtist.setMaxWidth(dp(330));
-        LinearLayout.LayoutParams txp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        txp.leftMargin = dp(22);
+        LinearLayout.LayoutParams txp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);   // fast bredde: teksten klippes, kortet vokser ikke
+        txp.leftMargin = dp(16);
         t.addView(tx, txp);
         track = t;
         track.setVisibility(GONE);
-        LayoutParams tl = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
+        LayoutParams tl = new LayoutParams(dp(360), dp(108), Gravity.BOTTOM | Gravity.END);   // fast størrelse, også uden cover
         tl.setMargins(0, 0, dp(56), dp(46));
         track.setTranslationZ(4);
         addView(track, tl);
