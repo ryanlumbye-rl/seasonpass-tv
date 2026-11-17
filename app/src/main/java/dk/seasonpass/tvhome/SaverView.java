@@ -68,7 +68,8 @@ final class SaverView extends FrameLayout {
     private static final long ZOOM_MS = 26000;
     private static final float ZOOM_TO = 1.16f;
     private View scrim;
-    private final TextView clock, date, title, line, trackTitle, trackArtist;
+    private final TextView clock, date, title, line, trackTitle, trackArtist, trackSource;
+    private final ProgressLine trackLine;
     private final View track;
     private final ImageView trackArt;
     private final List<Slide> slides = new ArrayList<>();
@@ -77,6 +78,11 @@ final class SaverView extends FrameLayout {
     private boolean running;
     private final String clockMode;
     private final boolean music;
+    private final boolean news;
+    private final LinearLayout newsBox;
+    private final TextView newsLabel, newsLine;
+    private final List<String> headlines = new ArrayList<>();
+    private int headlineAt = -1;
     private String shownTrack = "";
 
     SaverView(Context c) {
@@ -88,6 +94,7 @@ final class SaverView extends FrameLayout {
         bold = c.getResources().getFont(R.font.urbanist_bold);
         clockMode = Prefs.clock(c);
         music = Prefs.music(c);
+        news = Prefs.news(c);
 
         for (int i = 0; i < 2; i++) {
             imgs[i] = new FeatherImageView(c);
@@ -123,43 +130,66 @@ final class SaverView extends FrameLayout {
             col.addView(clock, margins(0, big ? 6 : 14, 0, big ? -14 : 0));
             col.addView(date);
         }
+        // Nyheder: én overskrift ad gangen i dæmpet tekst under datoen (News). Lille mærke med tjenestens navn over.
+        newsBox = new LinearLayout(c);
+        newsBox.setOrientation(LinearLayout.VERTICAL);
+        newsLabel = text("", 10, semibold, 0x61F2F1EC);
+        newsLabel.setLetterSpacing(0.12f);
+        newsLabel.setSingleLine(true);
+        newsLine = text("", 17, regular, MUTED);
+        newsLine.setMaxLines(2);
+        newsLine.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        newsBox.addView(newsLabel);
+        newsBox.addView(newsLine, margins(0, 3, 0, 0));
+        newsBox.setVisibility(GONE);
+        if (news) col.addView(newsBox, margins(0, 20, 0, 0));
         FrameLayout.LayoutParams cl = new LayoutParams(dp(onlyClock ? 840 : 560), ViewGroup.LayoutParams.WRAP_CONTENT,
                 onlyClock ? Gravity.CENTER : Gravity.BOTTOM | Gravity.START);
         if (onlyClock) col.setGravity(Gravity.CENTER_HORIZONTAL);
         else cl.setMargins(dp(56), 0, 0, dp(46));
-        if (onlyClock) { clock.setGravity(Gravity.CENTER); date.setGravity(Gravity.CENTER); }
+        if (onlyClock) { clock.setGravity(Gravity.CENTER); date.setGravity(Gravity.CENTER); newsLabel.setGravity(Gravity.CENTER); newsLine.setGravity(Gravity.CENTER); newsBox.setGravity(Gravity.CENTER_HORIZONTAL); }
         col.setTranslationZ(4);
         addView(col, cl);
 
-        // Højre, nederst: spiller nu.
+        // Højre, nederst: spiller nu. Et stort, roligt kort: cover, tjenestens navn, titel, kunstner og en tynd fremdriftslinje.
         LinearLayout t = new LinearLayout(c);
         t.setGravity(Gravity.CENTER_VERTICAL);
         GradientDrawable tb = new GradientDrawable();
-        tb.setCornerRadius(dp(14));
-        tb.setColor(0x99000000);
+        tb.setCornerRadius(dp(22));
+        tb.setColor(0xB30A0A0C);
+        tb.setStroke(Math.max(1, dp(1)), 0x1FF2F1EC);
         t.setBackground(tb);
-        t.setPadding(dp(12), dp(12), dp(18), dp(12));
+        t.setPadding(dp(16), dp(16), dp(28), dp(16));
         trackArt = new ImageView(c);
         trackArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
         trackArt.setClipToOutline(true);
         trackArt.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(8)); }
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(12)); }
         });
-        t.addView(trackArt, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        t.addView(trackArt, new LinearLayout.LayoutParams(dp(132), dp(132)));
         LinearLayout tx = new LinearLayout(c);
         tx.setOrientation(LinearLayout.VERTICAL);
-        trackTitle = text("", 15, semibold, FG);
+        trackSource = text("", 12, semibold, MUTED);
+        trackSource.setLetterSpacing(0.12f);
+        trackSource.setSingleLine(true);
+        trackTitle = text("", 28, bold, FG);
         trackTitle.setSingleLine(true);
         trackTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        trackArtist = text("", 13, regular, MUTED);
+        trackTitle.setLetterSpacing(-0.01f);
+        trackArtist = text("", 19, regular, MUTED);
         trackArtist.setSingleLine(true);
         trackArtist.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        tx.addView(trackTitle);
-        tx.addView(trackArtist, margins(0, 2, 0, 0));
-        trackTitle.setMaxWidth(dp(260));
-        trackArtist.setMaxWidth(dp(260));
+        trackLine = new ProgressLine(c);
+        tx.addView(trackSource);
+        tx.addView(trackTitle, margins(0, 6, 0, 0));
+        tx.addView(trackArtist, margins(0, 3, 0, 0));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(3, dp(4)));
+        lp.topMargin = dp(16);
+        tx.addView(trackLine, lp);
+        trackTitle.setMaxWidth(dp(330));
+        trackArtist.setMaxWidth(dp(330));
         LinearLayout.LayoutParams txp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        txp.leftMargin = dp(12);
+        txp.leftMargin = dp(22);
         t.addView(tx, txp);
         track = t;
         track.setVisibility(GONE);
@@ -169,12 +199,38 @@ final class SaverView extends FrameLayout {
         addView(track, tl);
     }
 
+    /** Tynd linje under nummeret: hvor langt det er nået (0..1). */
+    private final class ProgressLine extends View {
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private float fraction = -1;
+
+        ProgressLine(Context c) { super(c); }
+
+        void set(float f) {
+            if (f == fraction) return;
+            fraction = f;
+            setVisibility(f < 0 ? INVISIBLE : VISIBLE);
+            invalidate();
+        }
+
+        @Override protected void onDraw(android.graphics.Canvas cv) {
+            float h = getHeight(), w = getWidth(), r = h / 2f;
+            paint.setColor(0x33F2F1EC);
+            cv.drawRoundRect(0, 0, w, h, r, r, paint);
+            if (fraction > 0) {
+                paint.setColor(FG);
+                cv.drawRoundRect(0, 0, Math.max(h, w * Math.min(1f, fraction)), h, r, r, paint);
+            }
+        }
+    }
+
     void start() {
         if (running) return;
         running = true;
         generation++;
         tickClock.run();
         if (music) pollMusic.run();
+        if (news) startNews();
         final int gen = generation;
         io.execute(() -> {
             List<Slide> s = loadSlides();
@@ -196,7 +252,58 @@ final class SaverView extends FrameLayout {
         for (int i = 0; i < 2; i++) if (zooms[i] != null) zooms[i].cancel();
         title.animate().cancel();
         line.animate().cancel();
+        newsBox.animate().cancel();
     }
+
+    // --- Nyheder (News) ---
+
+    private static final long HEADLINE_MS = 20000;
+
+    /** Viser de gemte overskrifter med det samme og henter nye i baggrunden, hvis de er gamle. */
+    private void startNews() {
+        final Strings tx = Strings.of(getContext());
+        final News.Source src = News.chosen(getContext(), tx);
+        newsLabel.setText(src.name.toUpperCase(java.util.Locale.ROOT));
+        headlines.clear();
+        headlines.addAll(News.cached(getContext(), src));
+        headlineAt = -1;
+        final int gen = generation;
+        if (News.stale(getContext(), src)) {
+            io.execute(() -> {
+                List<String> fresh = News.refresh(getContext(), src);
+                main.post(() -> {
+                    if (!running || gen != generation || fresh.isEmpty()) return;
+                    boolean first = headlines.isEmpty();
+                    headlines.clear();
+                    headlines.addAll(fresh);
+                    if (first) { headlineAt = -1; nextHeadline.run(); }
+                });
+            });
+        }
+        if (!headlines.isEmpty()) nextHeadline.run();
+    }
+
+    /** Blød overgang til næste overskrift (ud, ny tekst, ind); skifter hvert 20. sekund. */
+    private final Runnable nextHeadline = new Runnable() {
+        @Override public void run() {
+            if (!running || headlines.isEmpty()) return;
+            headlineAt = (headlineAt + 1) % headlines.size();
+            final String t = headlines.get(headlineAt);
+            if (newsBox.getVisibility() != VISIBLE) {
+                newsLine.setText(t);
+                newsBox.setAlpha(0f);
+                newsBox.setVisibility(VISIBLE);
+                newsBox.animate().alpha(1f).setDuration(900).start();
+            } else {
+                newsBox.animate().alpha(0f).setDuration(700).withEndAction(() -> {
+                    newsLine.setText(t);
+                    newsBox.animate().alpha(1f).setDuration(900).start();
+                }).start();
+            }
+            main.removeCallbacks(this);
+            main.postDelayed(this, HEADLINE_MS);
+        }
+    };
 
     private final Runnable tickClock = new Runnable() {
         @Override public void run() {
@@ -432,7 +539,7 @@ final class SaverView extends FrameLayout {
         @Override public void run() {
             if (!running) return;
             update(findPlaying());
-            main.postDelayed(this, 2500);
+            main.postDelayed(this, 1000);
         }
     };
 
@@ -482,8 +589,32 @@ final class SaverView extends FrameLayout {
             if (art == null) art = md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON);
             trackArt.setImageBitmap(art);
             trackArt.setVisibility(art == null ? GONE : VISIBLE);
+            trackSource.setText(sourceName(c).toUpperCase(java.util.Locale.ROOT));
         }
+        trackLine.set(progress(c, md));
         track.setVisibility(VISIBLE);
+    }
+
+    /** Appens navn (Spotify, YouTube Music …) til den lille overskrift; tom, hvis det ikke kan findes. */
+    private String sourceName(MediaController c) {
+        try {
+            android.content.pm.PackageManager pm = getContext().getPackageManager();
+            return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(c.getPackageName(), 0)));
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Hvor langt nummeret er nået, 0..1; -1 uden kendt længde (så skjules linjen). */
+    private static float progress(MediaController c, MediaMetadata md) {
+        long dur = md.getLong(MediaMetadata.METADATA_KEY_DURATION);
+        PlaybackState st = c.getPlaybackState();
+        if (dur <= 0 || st == null || st.getPosition() < 0) return -1;
+        long pos = st.getPosition();
+        if (st.getState() == PlaybackState.STATE_PLAYING) {
+            pos += (long) ((android.os.SystemClock.elapsedRealtime() - st.getLastPositionUpdateTime()) * st.getPlaybackSpeed());
+        }
+        return Math.max(0f, Math.min(1f, pos / (float) dur));
     }
 
     // --- Små hjælpere (samme enhed som forsiden: 960 enheder på tværs) ---

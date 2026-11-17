@@ -7,6 +7,8 @@ og **Kommer snart**. Den har også en pauseskærm med serie-slideshow, stort ur 
 
 > **Kræver SeasonPass-appen på din telefon.** SeasonPass TV er kun den ene halvdel: det er telefonappen, der kender dine serier og sender dem
 > til tv'et over Wi-Fi. SeasonPass-appen er et separat projekt og ikke en del af dette repo. Uden den viser tv'et kun dine apps og en tom serieliste.
+>
+> **Vil du ikke have SeasonPass?** Slå **Indstillinger → Brug uden SeasonPass** til: så viser forsiden kun dagens dato og dine apps, pauseskærmen kun uret, og tv'et lytter slet ikke efter en telefon.
 
 ![Forsiden: en stor serie øverst, så Næste afsnit og Dine apps](docs/screenshots/da/home.jpg)
 
@@ -25,6 +27,7 @@ Skærmbillederne viser den danske version. Tv'et følger sproget i SeasonPass-ap
 - **Opdag serier** med forslag ud fra det, du ser, og knapperne *Har set den* og *Ikke for mig*, som telefonen henter og følger op på.
 - **Pauseskærm** med serierne som slideshow (cirkel-overgang med blød kant og stille zoom), stort ur og en lille boks med det, der spilles i Spotify-appen på tv'et.
 - **Indstillinger** på tv'et: pauseskærmens indhold, ur, musik og opdatering. Avataren viser forbogstavet af dit navn fra telefonen.
+- Uden telefon: appen taler tv'ets eget sprog (engelsk, dansk, svensk, norsk, finsk, islandsk, færøsk eller grønlandsk), og **Brug uden SeasonPass** giver en ren startskærm med kun dine apps og et ur.
 - Giver besked om en ny version og kan opdatere sig selv (hentet fra GitHub, med kontrolsum).
 - Kan gøres til tv'ets startskærm og fortrydes igen. Lille: ca. 150 KB, ingen afhængigheder.
 - Installationsscriptene taler otte sprog (engelsk, dansk, svensk, norsk, finsk, islandsk, færøsk, grønlandsk), valgt efter computerens sprog eller med `--lang`.

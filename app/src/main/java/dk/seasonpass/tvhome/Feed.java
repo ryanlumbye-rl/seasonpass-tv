@@ -75,6 +75,7 @@ final class Feed {
                 JSONObject card = card(s);
                 JSONObject first = have.get(0);
                 card.put("episode", ep(first));
+                link(card, first);
                 card.put("episodeName", first.optString("name", ""));
                 card.put("count", have.size());
                 ready.add(new JSONObject[]{card, first});
@@ -82,6 +83,7 @@ final class Feed {
                 JSONObject h = card(s);
                 h.put("season", tx.t("progress.season", "s", first.optInt("s")));
                 h.put("line", tx.t("tvhome.ready", "ep", ep(first)));
+                link(h, first);
                 h.put("overview", s.optString("overview", ""));
                 heroInfo.put(s.optString("id"), h);
             }
@@ -131,6 +133,7 @@ final class Feed {
             JSONObject c = card(s);
             JSONArray r = s.optJSONArray("ready");
             c.put("count", r == null ? 0 : r.length());
+            if (r != null && r.length() > 0) link(c, r.getJSONObject(0));
             pausedArr.put(c);
         }
         out.put("paused", pausedArr);
@@ -148,6 +151,12 @@ final class Feed {
         }
         out.put("discover", discoverArr);
         return out;
+    }
+
+    /** Afsnittets link (telefonens felt "link"), hvis det er en gyldig adresse på en kendt tjeneste (Links.ok); ellers intet. */
+    private static void link(JSONObject card, JSONObject episode) throws Exception {
+        String l = episode.isNull("link") ? "" : episode.optString("link", "");
+        if (Links.ok(l)) card.put("link", l);
     }
 
     private static JSONObject card(JSONObject s) throws Exception {

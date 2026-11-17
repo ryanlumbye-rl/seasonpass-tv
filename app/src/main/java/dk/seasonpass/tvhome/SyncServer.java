@@ -66,7 +66,7 @@ final class SyncServer {
     }
 
     static synchronized void start(Context c) {
-        if (instance != null) return;
+        if (instance != null || Prefs.standalone(c)) return;
         instance = new SyncServer(c);
         Thread t = new Thread(instance::loop, "seasonpass-sync");
         t.setDaemon(true);
@@ -90,6 +90,7 @@ final class SyncServer {
 
     private void handle(Socket s) {
         try (Socket sock = s) {
+            if (Prefs.standalone(app)) return;   // switched to "Use without SeasonPass" while running: refuse everything
             sock.setSoTimeout(10000);
             InputStream in = new BufferedInputStream(sock.getInputStream());
             String request = line(in);

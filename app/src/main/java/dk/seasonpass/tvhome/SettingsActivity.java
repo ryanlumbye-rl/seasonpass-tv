@@ -72,13 +72,19 @@ public class SettingsActivity extends Activity {
 
         LinearLayout home = section(S.t("tvhome.sectionHome"));
         row(home, S.t("tvhome.homeApps"), S.t("tvhome.homeAppsValue", "n", HomeApps.count(this)), 0, x -> startActivity(new Intent(this, AppsActivity.class)));
+        row(home, S.t("tvhome.standalone"), S.t(Prefs.standalone(this) ? "tvhome.on" : "tvhome.off"), 0, x -> {
+            boolean on = !Prefs.standalone(this);
+            Prefs.setStandalone(this, on);
+            if (on) Toast.makeText(this, S.t("tvhome.standaloneHint"), Toast.LENGTH_LONG).show();
+            rebuild();
+        });
 
         LinearLayout saver = section(S.t("tvhome.saver"));
         row(saver, S.t("tvhome.saver"), saverState(), 0, x -> {
             if (!Prefs.setDream(this, !Prefs.dreamOn(this))) noRight();
             else rebuild();
         });
-        row(saver, S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))), 0, x -> {
+        if (!Prefs.standalone(this)) row(saver, S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))), 0, x -> {
             Prefs.sp(this).edit().putString("saver_content", Prefs.cycle(Prefs.CONTENT_KEYS, Prefs.content(this))).apply();
             rebuild();
         });
@@ -97,6 +103,24 @@ public class SettingsActivity extends Activity {
             rebuild();
         });
         row(saver, S.t("tvhome.tryDream"), "›", 0, x -> startActivity(new Intent(this, SaverPreviewActivity.class)));
+
+        // Nyheder: slået fra som standard; kilderne følger landet (News.sources).
+        LinearLayout news = section(S.t("tvhome.sectionNews"));
+        boolean newsOn = Prefs.news(this);
+        row(news, S.t("tvhome.news"), S.t(newsOn ? "tvhome.on" : "tvhome.off"), newsOn ? 1 : 2, x -> {
+            Prefs.sp(this).edit().putBoolean("saver_news", !Prefs.news(this)).apply();
+            rebuild();
+        });
+        if (newsOn) {
+            java.util.List<News.Source> choices = News.sources(News.country(S));
+            row(news, S.t("tvhome.newsSource"), News.chosen(this, S).name, 0, x -> {
+                int at = 0;
+                News.Source now = News.chosen(this, S);
+                for (int i = 0; i < choices.size(); i++) if (choices.get(i).id.equals(now.id)) at = i;
+                Prefs.sp(this).edit().putString("news_source", choices.get((at + 1) % choices.size()).id).apply();
+                rebuild();
+            });
+        }
 
         LinearLayout system = section(S.t("tvhome.sectionSystem"));
         row(system, S.t("tvhome.update"), updateState(), update != null ? 1 : 0, x -> updateClicked());
@@ -247,6 +271,7 @@ public class SettingsActivity extends Activity {
         LinearLayout r = new LinearLayout(this);
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setFocusable(true);
+        r.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         r.setPadding(dp(18), dp(10), dp(14), dp(10));
         r.addView(text(label, 17, semibold, FG), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (kind == 0) {

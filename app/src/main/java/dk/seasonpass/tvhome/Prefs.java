@@ -20,9 +20,17 @@ final class Prefs {
         return c.getSharedPreferences("settings", Context.MODE_PRIVATE);
     }
 
-    static String content(Context c) { return sp(c).getString("saver_content", "mix"); }
+    /** "Use without SeasonPass": the home screen shows only the date and your apps, the screensaver only the clock, and nothing listens for a phone. */
+    static boolean standalone(Context c) { return sp(c).getBoolean("standalone", false); }
+    static void setStandalone(Context c, boolean on) { sp(c).edit().putBoolean("standalone", on).apply(); }
+
+    static String content(Context c) { return standalone(c) ? "clock" : sp(c).getString("saver_content", "mix"); }
     static String clock(Context c) { return sp(c).getString("saver_clock", "big"); }
     static boolean music(Context c) { return sp(c).getBoolean("saver_music", true); }
+
+    /** Nyheder på pauseskærmen (News): slået fra som standard; kilden er en tjenestes id, tom = landets første. */
+    static boolean news(Context c) { return sp(c).getBoolean("saver_news", false); }
+    static String newsSource(Context c) { return sp(c).getString("news_source", ""); }
 
     /** Brugerens fornavn fra telefonen (feedets "name"), til avataren. Tom, hvis telefonen ikke har sendt et. */
     static String name(Context c) { return sp(c).getString("name", ""); }

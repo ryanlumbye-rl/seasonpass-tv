@@ -76,6 +76,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private int heroIndex = 0;
     private JSONObject currentHero;
     private long feedStamp = -1;
+    private boolean shownStandalone;
     /** Profilen, rækkerne er bygget for; skifter den, vises navnet kort. */
     private static String shownProfile;   // static: overlever, at skærmen bygges igen ved sprogskifte
     /** Fjernsynets tekster og sprog (fra den aktive profils feed); skærmen bygges igen, hvis de skifter. */
@@ -84,6 +85,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private JSONObject v2;
     private String shownSignature = "";
     private TextView pairBanner, avatar, updatePill;
+    private GradientDrawable avatarRing;
+    private PersonDrawable avatarPerson;
     private View infoPanel, infoPlay, infoReturn, infoSeen, infoNope;
     private TextView infoHelp;
     private JSONObject infoItem;
@@ -133,6 +136,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         semibold = getResources().getFont(R.font.urbanist_semibold);
         bold = getResources().getFont(R.font.urbanist_bold);
         setContentView(buildScreen());
+        shownStandalone = Prefs.standalone(this);
         SyncServer.start(this);
     }
 
@@ -153,7 +157,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         if (avatar == null) return;
         String n = Prefs.name(this);
         avatar.setText(n.isEmpty() ? "" : new String(Character.toChars(Character.toUpperCase(n.codePointAt(0)))));
-        avatar.setForeground(n.isEmpty() ? new PersonDrawable() : null);   // uden navn: et neutralt personikon i stedet for en tom ring
+        avatarPerson = n.isEmpty() ? new PersonDrawable() : null;   // uden navn: et neutralt personikon i stedet for en tom ring
+        avatar.setForeground(avatarPerson);
+        avatarFocus(avatar.hasFocus());
     }
 
     /** Vælg profil i hånden (flere telefoner parret). Valget gælder, til tv'et får en ny session med en anden telefon. */
@@ -178,11 +184,22 @@ public class MainActivity extends Activity implements SyncServer.Listener {
                 .show();
     }
 
+    /** Som knapperne ved siden af: valgt er fyldt hvid med mørkt bogstav eller ikon; ellers en tynd ring. */
+    private void avatarFocus(boolean on) {
+        if (avatarRing == null) return;
+        avatarRing.setColor(on ? FG : Color.TRANSPARENT);
+        avatarRing.setStroke(dp(1), on ? FG : 0x47F2F1EC);
+        avatar.setTextColor(on ? 0xFF0E0E10 : FG);
+        if (avatarPerson != null) avatarPerson.setColor(on ? 0xB30E0E10 : 0x8CF2F1EC);
+    }
+
     /** Hoved og skuldre inde i avatarens ring, til når telefonen ikke har sendt et navn. */
     private static final class PersonDrawable extends Drawable {
         private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
         PersonDrawable() { p.setColor(0x8CF2F1EC); }
+
+        void setColor(int c) { p.setColor(c); invalidateSelf(); }
 
         @Override public void draw(android.graphics.Canvas c) {
             android.graphics.Rect b = getBounds();
@@ -224,6 +241,13 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private void reloadIfChanged() {
         File f = new File(FeedProvider.dir(this), "feed.json");
         long stamp = f.exists() ? f.lastModified() : 0;
+        if (Prefs.standalone(this) != shownStandalone) {   // switched in Settings: build the screen the other way
+            shownStandalone = Prefs.standalone(this);
+            SyncServer.start(this);
+            feedStamp = -1;
+            recreate();
+            return;
+        }
         if (stamp != feedStamp) {
             feedStamp = stamp;
             Strings now = Strings.of(this);
@@ -379,8 +403,10 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         ring.setStroke(dp(1), 0x47F2F1EC);
         avatar.setBackground(ring);
         avatar.setFocusable(true);
+        avatar.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         avatar.setOnClickListener(x -> pickProfile());
-        avatar.setOnFocusChangeListener((x, has) -> avatar.setForeground(has ? focusRing(dp(17), dp(3)) : null));
+        avatarRing = ring;
+        avatar.setOnFocusChangeListener((x, has) -> avatarFocus(has));
         top.addView(avatar, new LinearLayout.LayoutParams(dp(34), dp(34)));
         clock = text("", 17, regular, FG);
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -560,10 +586,24 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             feed = null;
         }
         content.addView(heroBlock());
+        if (Prefs.standalone(this)) {   // no shows: today's date and your apps
+            long now = System.currentTimeMillis();
+            String day = S.date("EEEE", now, S.tz);
+            heroTitle.setText(day.isEmpty() ? day : day.substring(0, day.offsetByCodePoints(0, 1)).toUpperCase(S.locale) + day.substring(day.offsetByCodePoints(0, 1)));
+            heroLine.setText(S.date("dMMMM", now, S.tz));
+            heroOverview.setVisibility(View.GONE);
+            ((View) playButton.getParent()).setVisibility(View.GONE);
+            View apps = appsRow();
+            content.addView(section(S.t("tvhome.yourApps"), apps));
+            content.post(() -> {   // after layout: focus the first app tile (or "All apps"), never the scroll view itself
+                for (View fv : apps.getFocusables(View.FOCUS_DOWN)) if (fv != apps) { fv.requestFocus(); break; }
+            });
+            return;
+        }
         if (feed == null) {
             heroTitle.setText("SeasonPass");
             heroLine.setText(S.t("tvhome.emptyTitle"));
-            heroOverview.setText(S.t("tvhome.emptyText"));
+            heroOverview.setText(S.t("tvhome.emptyText", "sync", S.t("tv.sync")));
             content.addView(section(S.t("tvhome.yourApps"), appsRow()));
             return;
         }
@@ -740,6 +780,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             JSONObject o = arr.optJSONObject(i);
             FrameLayout c = new FrameLayout(this);
             c.setFocusable(true);
+            c.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
             c.setBackgroundColor(SURFACE);
             rounded(c, 12);
             ImageView iv = new ImageView(this);
@@ -777,6 +818,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private View card(String title, String sub, String image) {
         FrameLayout c = new FrameLayout(this);
         c.setFocusable(true);
+        c.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         c.setBackgroundColor(SURFACE);
         rounded(c, 10);
         ImageView iv = new ImageView(this);
@@ -814,6 +856,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             String pkg = r.activityInfo.packageName;
             FrameLayout tile = new FrameLayout(this);
             tile.setFocusable(true);
+            tile.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
             tile.setBackgroundColor(SURFACE);
             rounded(tile, 8);
             Drawable banner = r.activityInfo.loadBanner(pm);
@@ -853,6 +896,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         TextView all = text(S.t("tvhome.allApps"), 13, semibold, FG);
         all.setGravity(Gravity.CENTER);
         all.setFocusable(true);
+        all.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         all.setBackgroundColor(SURFACE);
         rounded(all, 8);
         all.setOnClickListener(x -> openApps());
@@ -896,6 +940,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         TextView p = text(label, 15, semibold, FG);
         p.setTag("pill");
         p.setFocusable(true);
+        p.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         p.setGravity(Gravity.CENTER);
         p.setPadding(dp(24), dp(10), dp(24), dp(10));
         GradientDrawable bg = new GradientDrawable();
@@ -914,11 +959,33 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private void launch(JSONObject o) {
         if (o == null) return;
         String app = o.optString("app", "");
+        String link = o.optString("link", "");
+        if (Links.ok(link) && openLink(link, app)) return;   // direkte til afsnittet; ellers tjenestens app som før
         if (app.isEmpty() || "null".equals(app)) {
             Toast.makeText(this, S.t("tvhome.unknownApp"), Toast.LENGTH_SHORT).show();
             return;
         }
         launchPackage(app);
+    }
+
+    /**
+     * Starter afsnittets adresse. Først i tjenestens egen app (hvis vi kender den), ellers den app på tv'et, der ellers
+     * kan tage imod adressen. Intet, der tager den (fx ingen browser på tv'et): false, og kalderen åbner tjenestens app.
+     */
+    private boolean openLink(String link, String app) {
+        Intent view = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (!app.isEmpty() && !"null".equals(app)) {
+            try {
+                startActivity(new Intent(view).setPackage(app));
+                return true;
+            } catch (Exception ignored) { }   // appen findes ikke, eller tager ikke adressen
+        }
+        try {
+            startActivity(view);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void openApps() {

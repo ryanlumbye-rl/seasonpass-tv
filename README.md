@@ -7,6 +7,8 @@ and **Coming soon**. It also has a screensaver with a slideshow of your shows, a
 
 > **Requires the SeasonPass app on your phone.** SeasonPass TV is only one half: the phone app knows your shows and sends them
 > to the TV over Wi-Fi. The SeasonPass app is a separate project and not part of this repo. Without it the TV only shows your apps and an empty list of shows.
+>
+> **Don't want SeasonPass?** Switch on **Settings → Use without SeasonPass**: the home screen then shows only today's date and your apps, the screensaver only the clock, and the TV does not listen for a phone at all.
 
 ![The home screen: a big show on top, then Next episode and Your apps](docs/screenshots/home.jpg)
 
@@ -25,6 +27,7 @@ The screenshots show the English version. The TV follows the language of the Sea
 - **Discover series** with suggestions based on what you watch, and the buttons *Seen it* and *Not for me*, which the phone picks up and acts on.
 - **Screensaver** with your shows as a slideshow (circle transition with a soft edge and a slow zoom), a big clock and a small box with what is playing in the Spotify app on the TV.
 - **Settings** on the TV: screensaver content, clock, music and updates. The avatar shows the first letter of your name from the phone. Choose which of your apps appear on the home screen (hold OK on an app).
+- Without a phone: the app speaks the TV's own language (English, Danish, Swedish, Norwegian, Finnish, Icelandic, Faroese or Greenlandic), and **Use without SeasonPass** gives a clean home screen with just your apps and a clock.
 - Tells you when there is a new version and can update itself (downloaded from GitHub, with a checksum).
 - Can be made the TV's home screen and undone again. Small: about 150 KB, no dependencies.
 - The install scripts speak eight languages (English, Danish, Swedish, Norwegian, Finnish, Icelandic, Faroese, Greenlandic), chosen from your computer's language or with `--lang`.

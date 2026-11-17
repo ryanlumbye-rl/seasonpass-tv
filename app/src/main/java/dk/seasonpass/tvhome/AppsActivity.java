@@ -87,6 +87,7 @@ public class AppsActivity extends Activity {
         String pkg = r.activityInfo.packageName;
         FrameLayout tile = new FrameLayout(this);
         tile.setFocusable(true);
+        tile.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         tile.setBackgroundColor(SURFACE);
         int radius = dp(8);
         tile.setOutlineProvider(new ViewOutlineProvider() {

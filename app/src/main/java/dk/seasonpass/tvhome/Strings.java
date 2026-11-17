@@ -93,6 +93,9 @@ final class Strings {
         D.put("tvhome.homeAppsValue", "{n} valgt");
         D.put("tvhome.sectionHome", "Forside");
         D.put("tvhome.sectionSystem", "System");
+        D.put("tvhome.sectionNews", "Nyheder");
+        D.put("tvhome.news", "Nyheder på pauseskærmen");
+        D.put("tvhome.newsSource", "Kilde");
     }
 
     static final TimeZone CPH = TimeZone.getTimeZone("Europe/Copenhagen");
@@ -101,6 +104,17 @@ final class Strings {
     final Locale locale;
     final TimeZone tz;
     private final Map<String, String> map = new HashMap<>();
+    private final Map<String, String> builtin;
+
+    /** The TV's own language (one of the eight the app speaks, else English) when no phone has sent one. */
+    private static String deviceCode() {
+        String l = Locale.getDefault().getLanguage();
+        switch (l) {
+            case "da": case "sv": case "fi": case "is": case "fo": case "kl": return l;
+            case "nb": case "nn": case "no": return "no";
+            default: return "en";
+        }
+    }
 
     /** Fra en feed (version 2); null eller uden sprog giver dansk. */
     Strings(JSONObject feed) {
@@ -126,9 +140,15 @@ final class Strings {
                 }
             }
         }
+        if (feed == null) {   // no phone yet (or no SeasonPass at all): the TV's own language, clock and time zone
+            c = deviceCode();
+            l = Locale.getDefault();
+            z = TimeZone.getDefault();
+        }
         code = c;
         locale = l;
         tz = z;
+        builtin = BuiltinStrings.of(c);
     }
 
     /**
@@ -137,6 +157,7 @@ final class Strings {
      */
     String t(String key, String... kv) {
         String text = map.get(key);
+        if (text == null) text = builtin.get(key);
         if (text == null) text = D.get(key);
         if (text == null) return key;
         if (kv.length == 0) return text;
