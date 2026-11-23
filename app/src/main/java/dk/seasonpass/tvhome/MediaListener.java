@@ -7,4 +7,10 @@ import android.service.notification.NotificationListenerService;
  * hvad der spilles i andre apps (Spotify m.fl.). Vi læser ingen notifikationer. Slås til i Indstillinger
  * (eller af install.sh); se Prefs.setListener.
  */
-public class MediaListener extends NotificationListenerService { }
+public class MediaListener extends NotificationListenerService {
+    /** Forbundet: følg afspilningerne i streaming-apps (Watch), så forsiden kan spørge, om et afsnit blev set. */
+    @Override
+    public void onListenerConnected() {
+        Watch.attach(this);
+    }
+}

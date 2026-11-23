@@ -73,6 +73,31 @@ final class Actions {
         } catch (Exception ignored) { }
     }
 
+    /** Et afsnit er set (efter et ja på forsiden). Samme afsnit, der allerede venter, tilføjes ikke igen. */
+    static synchronized void episode(Context c, String show, int season, int number) {
+        if (show == null || show.isEmpty() || season < 1 || number < 1) return;   // specials kan telefonen ikke finde
+        String profile = Profiles.active(c);
+        try {
+            JSONArray now = all(c);
+            for (int i = 0; i < now.length(); i++) {
+                JSONObject a = now.getJSONObject(i);
+                if ("episodeSeen".equals(a.optString("kind")) && show.equals(a.optString("show"))
+                        && a.optInt("s") == season && a.optInt("n") == number) return;
+            }
+            JSONArray next = new JSONArray();
+            int from = Math.max(0, now.length() - (MAX - 1));
+            for (int i = from; i < now.length(); i++) next.put(now.get(i));
+            next.put(new JSONObject()
+                    .put("id", UUID.randomUUID().toString())
+                    .put("kind", "episodeSeen")
+                    .put("show", show)
+                    .put("s", season)
+                    .put("n", number)
+                    .put("at", System.currentTimeMillis()));
+            prefs(c).edit().putString(key(profile), next.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
     /** Fjerner de kvitterede handlinger fra profilens kø. */
     static synchronized void ack(Context c, String profile, Set<String> ids) {
         try {

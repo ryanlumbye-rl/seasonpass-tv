@@ -62,6 +62,9 @@ final class Strings {
         D.put("tvhome.switchAsk", "{name} åbnede SeasonPass. Skift til {name}?");
         D.put("tvhome.switch", "Skift");
         D.put("tvhome.keep", "Behold");
+        D.put("tvhome.seenAsk", "Så du hele {show} {ep}?");
+        D.put("tvhome.yes", "Ja");
+        D.put("tvhome.no", "Nej");
         D.put("tvhome.profileN", "Profil {n}");
         D.put("tvhome.saver", "Pauseskærm");
         D.put("tvhome.saverTv", "Tv'ets egen");

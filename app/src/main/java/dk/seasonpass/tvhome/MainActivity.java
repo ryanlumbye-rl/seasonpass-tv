@@ -86,9 +86,10 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private String shownSignature = "";
     private TextView pairBanner, avatar, updatePill;
     private LinearLayout askBar;
-    private TextView askText;
-    private String askId = "";
+    private TextView askText, askYes, askNo;
+    private Runnable onYes, onNo;
     private final Runnable askTimeout = () -> answerAsk(false);
+    private final Runnable watchedCheck = this::checkWatched;
     private GradientDrawable avatarRing;
     private PersonDrawable avatarPerson;
     private View infoPanel, infoPlay, infoReturn, infoSeen, infoNope;
@@ -150,6 +151,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         SyncServer.setListener(this);
         reloadIfChanged();
         onProfileRequest();
+        checkWatched();
+        main.postDelayed(watchedCheck, 4000);   // nogle apps stopper først et øjeblik efter, at man forlader dem
         main.post(tick);
         showName();
         checkUpdate();
@@ -272,28 +275,46 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     @Override
     public void onProfileRequest() {
         String id = Profiles.pending(this);
-        if (id.isEmpty() || askBar == null || id.equals(askId) && askBar.getVisibility() == View.VISIBLE) return;
+        if (id.isEmpty() || askBar == null || askBar.getVisibility() == View.VISIBLE) return;
         List<String> ids = Profiles.all(this);
-        askId = id;
-        askText.setText(S.t("tvhome.switchAsk", "name", Profiles.label(this, id, Math.max(0, ids.indexOf(id)))));
+        showAsk(S.t("tvhome.switchAsk", "name", Profiles.label(this, id, Math.max(0, ids.indexOf(id)))),
+                S.t("tvhome.switch"), S.t("tvhome.keep"),
+                () -> {
+                    try { Profiles.select(this, id); } catch (Exception ignored) { }
+                    feedStamp = -1;
+                    reloadIfChanged();
+                },
+                () -> Profiles.dismiss(this, id));
+    }
+
+    /** Forsiden er fremme igen: blev noget set til ende i en streaming-app, så spørg, om afsnittet skal sættes som set. */
+    private void checkWatched() {
+        if (askBar == null || askBar.getVisibility() == View.VISIBLE) return;
+        Watch.Result r = Watch.finished(this);
+        if (r == null) return;
+        showAsk(S.t("tvhome.seenAsk", "show", r.title, "ep", "S" + r.s + " E" + r.n),
+                S.t("tvhome.yes"), S.t("tvhome.no"),
+                () -> Actions.episode(this, r.show, r.s, r.n), null);
+    }
+
+    private void showAsk(String text, String yes, String no, Runnable onYes, Runnable onNo) {
+        askText.setText(text);
+        askYes.setText(yes);
+        askNo.setText(no);
+        this.onYes = onYes;
+        this.onNo = onNo;
         askBar.setVisibility(View.VISIBLE);
         main.removeCallbacks(askTimeout);
         main.postDelayed(askTimeout, 25 * 1000L);
     }
 
-    private void answerAsk(boolean change) {
+    private void answerAsk(boolean yes) {
         main.removeCallbacks(askTimeout);
         askBar.setVisibility(View.GONE);
-        if (askId.isEmpty()) return;
-        String id = askId;
-        askId = "";
-        if (change) {
-            try { Profiles.select(this, id); } catch (Exception ignored) { }
-            feedStamp = -1;
-            reloadIfChanged();
-        } else {
-            Profiles.dismiss(this, id);
-        }
+        Runnable r = yes ? onYes : onNo;
+        onYes = null;
+        onNo = null;
+        if (r != null) r.run();
     }
 
     /** Parring: vis koden stort, til telefonen har den (null skjuler den). */
@@ -354,6 +375,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     protected void onPause() {
         super.onPause();
         main.removeCallbacks(tick);
+        main.removeCallbacks(watchedCheck);
         main.removeCallbacks(rotate);
         main.removeCallbacks(rederive);
         SyncServer.setListener(null);
@@ -471,14 +493,14 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         askBar.setElevation(dp(12));
         askText = text("", 20, semibold, FG);
         askBar.addView(askText, margins(0, 0, 24, 0));
-        TextView yes = pill(S.t("tvhome.switch"), true);
-        yes.setOnClickListener(x -> answerAsk(true));
-        yes.setOnFocusChangeListener(chain(yes, null));
-        askBar.addView(yes, margins(0, 0, 10, 0));
-        TextView no = pill(S.t("tvhome.keep"), false);
-        no.setOnClickListener(x -> answerAsk(false));
-        no.setOnFocusChangeListener(chain(no, null));
-        askBar.addView(no);
+        askYes = pill("", true);
+        askYes.setOnClickListener(x -> answerAsk(true));
+        askYes.setOnFocusChangeListener(chain(askYes, null));
+        askBar.addView(askYes, margins(0, 0, 10, 0));
+        askNo = pill("", false);
+        askNo.setOnClickListener(x -> answerAsk(false));
+        askNo.setOnFocusChangeListener(chain(askNo, null));
+        askBar.addView(askNo);
         askBar.setVisibility(View.GONE);
         FrameLayout.LayoutParams alp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         alp.bottomMargin = dp(40);
@@ -1017,6 +1039,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         if (o == null) return;
         String app = o.optString("app", "");
         String link = o.optString("link", "");
+        if (!app.isEmpty() && !"null".equals(app)) Watch.launched(this, o.optString("id", ""), app);
         if (Links.ok(link) && openLink(link, app)) return;   // direkte til afsnittet; ellers tjenestens app som før
         if (app.isEmpty() || "null".equals(app)) {
             Toast.makeText(this, S.t("tvhome.unknownApp"), Toast.LENGTH_SHORT).show();
