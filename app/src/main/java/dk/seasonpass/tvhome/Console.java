@@ -22,14 +22,23 @@ final class Console {
 
     static File dir(Context c) { return c.getApplicationContext().getExternalFilesDir(null); }
 
-    static File image(Context c) {
+    /** Egne billeder på fjernsynet: console.jpg, console-2.jpg, console-3.jpg ... i appens mappe (console.jpg først). */
+    static java.util.List<File> images(Context c) {
+        java.util.List<File> out = new java.util.ArrayList<>();
         File d = dir(c);
-        return d == null ? null : new File(d, "console.jpg");
-    }
-
-    static boolean hasImage(Context c) {
-        File f = image(c);
-        return f != null && f.isFile();
+        File[] all = d == null ? null : d.listFiles();
+        if (all == null) return out;
+        for (File f : all) {
+            String n = f.getName().toLowerCase(java.util.Locale.ROOT);
+            if (f.isFile() && n.startsWith("console") && n.endsWith(".jpg")) out.add(f);
+        }
+        java.util.Collections.sort(out, (a, b) -> {
+            boolean pa = a.getName().equalsIgnoreCase("console.jpg"), pb = b.getName().equalsIgnoreCase("console.jpg");
+            if (pa != pb) return pa ? -1 : 1;
+            String x = a.getName(), y = b.getName();
+            return x.length() != y.length() ? x.length() - y.length() : x.compareTo(y);   // console-2 før console-10
+        });
+        return out;
     }
 
     /** Låst op med mærket i Indstillinger. */

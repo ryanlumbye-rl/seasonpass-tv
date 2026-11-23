@@ -474,8 +474,7 @@ final class SaverView extends FrameLayout {
         String mode = Prefs.content(getContext());
         if (mode.equals("clock")) return out;
         if (mode.equals("gta")) {   // kun GTA: ét slide, og kun hvis easter egg'et er fundet
-            Slide only = consoleSlide(true);
-            if (only != null) out.add(only);
+            out.addAll(consoleSlides(true));
             return out;
         }
         try {
@@ -498,28 +497,45 @@ final class SaverView extends FrameLayout {
                     }
             }
         } catch (Exception ignored) { }
-        Slide cs = consoleSlide(false);
-        if (cs != null) {
-            out.add(Math.min(3, out.size()), cs);
-            if (out.size() >= 10) out.add(out.size() / 2 + 2, cs);
+        List<Slide> cs = consoleSlides(false);
+        if (!cs.isEmpty()) {
+            out.add(Math.min(3, out.size()), cs.get(0));
+            if (out.size() >= 10) {
+                List<Slide> more = consoleSlides(false);   // et nyt tilfældigt billede
+                out.add(out.size() / 2 + 2, more.isEmpty() ? cs.get(0) : more.get(0));
+            }
         }
         return out;
     }
 
-    /** Konsolkortet (Console): kun hvis det er slået til, billedet findes, og der er noget at sige. */
-    private Slide consoleSlide(boolean only) {
+    /**
+     * GTA-slides (Console): kun hvis det er slået til (eller valgt som "Kun GTA"). "Kun GTA" skifter mellem alle billederne
+     * på fjernsynet; i den blandede visning kommer ét af dem ind ad gangen. Uden egne billeder: en tegnet solnedgang.
+     */
+    private List<Slide> consoleSlides(boolean only) {
+        List<Slide> out = new ArrayList<>();
         try {
-            if (only ? !Console.unlocked(getContext()) : !Console.enabled(getContext())) return null;
+            if (only ? !Console.unlocked(getContext()) : !Console.enabled(getContext())) return out;
             String l = Console.line(getContext(), Strings.of(getContext()));
-            if (l == null) return null;
-            Slide s = new Slide();
-            s.image = Console.hasImage(getContext()) ? "file:" + Console.image(getContext()).getPath() : "gen:dusk";
-            s.title = Console.title(getContext());
-            s.line = l;
-            return s;
-        } catch (Exception e) {
-            return null;
-        }
+            if (l == null) return out;
+            List<File> files = Console.images(getContext());
+            List<String> refs = new ArrayList<>();
+            for (File f : files) refs.add("file:" + f.getPath());
+            if (refs.isEmpty()) refs.add("gen:dusk");
+            if (!only) {
+                String one = refs.get(new java.util.Random().nextInt(refs.size()));
+                refs.clear();
+                refs.add(one);
+            }
+            for (String ref : refs) {
+                Slide s = new Slide();
+                s.image = ref;
+                s.title = Console.title(getContext());
+                s.line = l;
+                out.add(s);
+            }
+        } catch (Exception ignored) { }
+        return out;
     }
 
     private List<Slide> slides(JSONArray a, char kind) {

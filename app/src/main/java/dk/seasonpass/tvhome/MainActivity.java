@@ -84,6 +84,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     /** Feed version 2 som modtaget; rækkerne regnes ud fra den igen, når uret flytter et afsnit. */
     private JSONObject v2;
     private String shownSignature = "";
+    private String shownApps = "";
     private TextView pairBanner, avatar, updatePill;
     private LinearLayout askBar;
     private TextView askText, askYes, askNo;
@@ -256,8 +257,10 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             recreate();
             return;
         }
-        if (stamp != feedStamp) {
+        String appsSig = HomeApps.list(this).toString();
+        if (stamp != feedStamp || !appsSig.equals(shownApps)) {   // ny feed, eller listen over apps på forsiden er ændret (Alle apps)
             feedStamp = stamp;
+            shownApps = appsSig;
             Strings now = Strings.of(this);
             if (!now.same(S)) { recreate(); return; }   // en anden profil eller et nyt sprog: byg skærmen med de nye tekster
             loadFeed(f);
