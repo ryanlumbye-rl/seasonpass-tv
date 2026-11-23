@@ -68,6 +68,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "New version {v}");
         m.put("tvhome.who", "Who's watching?");
         m.put("tvhome.oneProfile", "Only one profile. Pair more phones in SeasonPass to switch.");
+        m.put("tvhome.switchAsk", "{name} opened SeasonPass. Switch to {name}?");
+        m.put("tvhome.switch", "Switch");
+        m.put("tvhome.keep", "Keep");
         m.put("tvhome.profileN", "Profile {n}");
         m.put("tvhome.saver", "Screensaver");
         m.put("tvhome.saverTv", "The TV's own");
@@ -150,6 +153,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Ny version {v}");
         m.put("tvhome.who", "Hvem ser?");
         m.put("tvhome.oneProfile", "Kun én profil. Parr flere telefoner i SeasonPass for at skifte.");
+        m.put("tvhome.switchAsk", "{name} åbnede SeasonPass. Skift til {name}?");
+        m.put("tvhome.switch", "Skift");
+        m.put("tvhome.keep", "Behold");
         m.put("tvhome.profileN", "Profil {n}");
         m.put("tvhome.saver", "Pauseskærm");
         m.put("tvhome.saverTv", "Tv'ets egen");
@@ -232,6 +238,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Ny version {v}");
         m.put("tvhome.who", "Vem tittar?");
         m.put("tvhome.oneProfile", "Bara en profil. Para fler telefoner i SeasonPass för att byta.");
+        m.put("tvhome.switchAsk", "{name} öppnade SeasonPass. Byt till {name}?");
+        m.put("tvhome.switch", "Byt");
+        m.put("tvhome.keep", "Behåll");
         m.put("tvhome.profileN", "Profil {n}");
         m.put("tvhome.saver", "Skärmsläckare");
         m.put("tvhome.saverTv", "Tv:ns egen");
@@ -314,6 +323,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Ny versjon {v}");
         m.put("tvhome.who", "Hvem ser på?");
         m.put("tvhome.oneProfile", "Bare én profil. Koble til flere telefoner i SeasonPass for å bytte.");
+        m.put("tvhome.switchAsk", "{name} åpnet SeasonPass. Bytt til {name}?");
+        m.put("tvhome.switch", "Bytt");
+        m.put("tvhome.keep", "Behold");
         m.put("tvhome.profileN", "Profil {n}");
         m.put("tvhome.saver", "Skjermsparer");
         m.put("tvhome.saverTv", "TV-ens egen");
@@ -396,6 +408,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Uusi versio {v}");
         m.put("tvhome.who", "Kuka katsoo?");
         m.put("tvhome.oneProfile", "Vain yksi profiili. Yhdistä lisää puhelimia SeasonPassissa vaihtaaksesi.");
+        m.put("tvhome.switchAsk", "{name} avasi SeasonPassin. Vaihdetaanko profiiliin {name}?");
+        m.put("tvhome.switch", "Vaihda");
+        m.put("tvhome.keep", "Pidä");
         m.put("tvhome.profileN", "Profiili {n}");
         m.put("tvhome.saver", "Näytönsäästäjä");
         m.put("tvhome.saverTv", "Television oma");
@@ -478,6 +493,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Ný útgáfa {v}");
         m.put("tvhome.who", "Hver er að horfa?");
         m.put("tvhome.oneProfile", "Aðeins einn prófíll. Paraðu fleiri síma í SeasonPass til að skipta.");
+        m.put("tvhome.switchAsk", "{name} opnaði SeasonPass. Skipta yfir á {name}?");
+        m.put("tvhome.switch", "Skipta");
+        m.put("tvhome.keep", "Halda");
         m.put("tvhome.profileN", "Prófíll {n}");
         m.put("tvhome.saver", "Skjáhvíla");
         m.put("tvhome.saverTv", "Sjónvarpsins eigin");
@@ -560,6 +578,9 @@ final class BuiltinStrings {
         m.put("tvhome.newVersion", "Nýggj útgáva {v}");
         m.put("tvhome.who", "Hvør hyggur?");
         m.put("tvhome.oneProfile", "Bara ein profil. Knýt fleiri telefonir í SeasonPass fyri at skifta.");
+        m.put("tvhome.switchAsk", "{name} opnaði SeasonPass. Skifta til {name}?");
+        m.put("tvhome.switch", "Skifta");
+        m.put("tvhome.keep", "Halt");
         m.put("tvhome.profileN", "Profil {n}");
         m.put("tvhome.saver", "Skíggjahvíla");
         m.put("tvhome.saverTv", "Sjónvarpsins egna");

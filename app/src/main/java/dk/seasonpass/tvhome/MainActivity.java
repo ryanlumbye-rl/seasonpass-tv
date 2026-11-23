@@ -85,6 +85,10 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     private JSONObject v2;
     private String shownSignature = "";
     private TextView pairBanner, avatar, updatePill;
+    private LinearLayout askBar;
+    private TextView askText;
+    private String askId = "";
+    private final Runnable askTimeout = () -> answerAsk(false);
     private GradientDrawable avatarRing;
     private PersonDrawable avatarPerson;
     private View infoPanel, infoPlay, infoReturn, infoSeen, infoNope;
@@ -145,6 +149,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         super.onResume();
         SyncServer.setListener(this);
         reloadIfChanged();
+        onProfileRequest();
         main.post(tick);
         showName();
         checkUpdate();
@@ -261,6 +266,34 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     public void onFeed() {
         feedStamp = -1;
         reloadIfChanged();
+    }
+
+    /** En anden telefon har åbnet SeasonPass, mens tv'et er i brug: lille besked nederst, uden at tage fokus fra noget. */
+    @Override
+    public void onProfileRequest() {
+        String id = Profiles.pending(this);
+        if (id.isEmpty() || askBar == null || id.equals(askId) && askBar.getVisibility() == View.VISIBLE) return;
+        List<String> ids = Profiles.all(this);
+        askId = id;
+        askText.setText(S.t("tvhome.switchAsk", "name", Profiles.label(this, id, Math.max(0, ids.indexOf(id)))));
+        askBar.setVisibility(View.VISIBLE);
+        main.removeCallbacks(askTimeout);
+        main.postDelayed(askTimeout, 25 * 1000L);
+    }
+
+    private void answerAsk(boolean change) {
+        main.removeCallbacks(askTimeout);
+        askBar.setVisibility(View.GONE);
+        if (askId.isEmpty()) return;
+        String id = askId;
+        askId = "";
+        if (change) {
+            try { Profiles.select(this, id); } catch (Exception ignored) { }
+            feedStamp = -1;
+            reloadIfChanged();
+        } else {
+            Profiles.dismiss(this, id);
+        }
     }
 
     /** Parring: vis koden stort, til telefonen har den (null skjuler den). */
@@ -426,6 +459,30 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         pairBanner.setElevation(dp(12));
         pairBanner.setVisibility(View.GONE);
         root.addView(pairBanner, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        askBar = new LinearLayout(this);
+        askBar.setOrientation(LinearLayout.HORIZONTAL);
+        askBar.setGravity(Gravity.CENTER_VERTICAL);
+        askBar.setPadding(dp(28), dp(14), dp(18), dp(14));
+        GradientDrawable ab = new GradientDrawable();
+        ab.setCornerRadius(dp(99));
+        ab.setColor(SURFACE);
+        ab.setStroke(dp(1), FAINT);
+        askBar.setBackground(ab);
+        askBar.setElevation(dp(12));
+        askText = text("", 20, semibold, FG);
+        askBar.addView(askText, margins(0, 0, 24, 0));
+        TextView yes = pill(S.t("tvhome.switch"), true);
+        yes.setOnClickListener(x -> answerAsk(true));
+        yes.setOnFocusChangeListener(chain(yes, null));
+        askBar.addView(yes, margins(0, 0, 10, 0));
+        TextView no = pill(S.t("tvhome.keep"), false);
+        no.setOnClickListener(x -> answerAsk(false));
+        no.setOnFocusChangeListener(chain(no, null));
+        askBar.addView(no);
+        askBar.setVisibility(View.GONE);
+        FrameLayout.LayoutParams alp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        alp.bottomMargin = dp(40);
+        root.addView(askBar, alp);
         infoPanel = buildInfoPanel();
         root.addView(infoPanel, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         return root;

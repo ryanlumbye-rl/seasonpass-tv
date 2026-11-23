@@ -94,17 +94,38 @@ final class Profiles {
             e.remove("window_until");   // kun den første telefon i vinduet vinder
         } else {
             take = false;
+            // En anden telefon åbnede SeasonPass, mens tv'et er i brug: spørg, i stedet for at skifte af sig selv.
+            if (System.currentTimeMillis() >= sp(c).getLong("mute_" + id, 0)) {
+                e.putString("pending", id).putLong("pending_at", System.currentTimeMillis());
+            }
         }
-        if (take) e.putString("active", id);
+        if (take) e.putString("active", id).remove("pending");
         e.apply();
         if (take) copyToFeed(c, id);
         return take;
     }
 
+    /** Længe nok til at nå tilbage til forsiden, men ikke så længe, at en gammel forespørgsel dukker op. */
+    static final long PENDING_MS = 2 * 60 * 1000L;
+    /** Efter "Behold" (eller ingen svar) spørges der ikke igen om samme telefon så længe. */
+    static final long MUTE_MS = 30 * 60 * 1000L;
+
+    /** Profilen, hvis telefon netop har åbnet SeasonPass uden at blive den aktive; tom, hvis ingen venter. */
+    static String pending(Context c) {
+        String id = sp(c).getString("pending", "");
+        if (id.isEmpty() || id.equals(active(c)) || !file(c, id).isFile()) return "";
+        return System.currentTimeMillis() - sp(c).getLong("pending_at", 0) <= PENDING_MS ? id : "";
+    }
+
+    /** Spørgsmålet er besvaret med "Behold" eller timet ud. */
+    static void dismiss(Context c, String id) {
+        sp(c).edit().remove("pending").putLong("mute_" + id, System.currentTimeMillis() + MUTE_MS).apply();
+    }
+
     /** Vælg profil i hånden. */
     static synchronized void select(Context c, String id) throws Exception {
         if (!file(c, id).isFile()) return;
-        sp(c).edit().putString("active", id).remove("window_until").apply();
+        sp(c).edit().putString("active", id).remove("window_until").remove("pending").apply();
         copyToFeed(c, id);
     }
 

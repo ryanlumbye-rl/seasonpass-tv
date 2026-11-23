@@ -59,6 +59,9 @@ final class Strings {
         D.put("tvhome.newVersion", "Ny version {v}");
         D.put("tvhome.who", "Hvem ser?");
         D.put("tvhome.oneProfile", "Kun én profil. Parr flere telefoner i SeasonPass for at skifte.");
+        D.put("tvhome.switchAsk", "{name} åbnede SeasonPass. Skift til {name}?");
+        D.put("tvhome.switch", "Skift");
+        D.put("tvhome.keep", "Behold");
         D.put("tvhome.profileN", "Profil {n}");
         D.put("tvhome.saver", "Pauseskærm");
         D.put("tvhome.saverTv", "Tv'ets egen");

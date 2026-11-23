@@ -47,6 +47,7 @@ final class SyncServer {
     /** Skærmen lytter med, mens den er fremme. */
     interface Listener {
         void onFeed();
+        void onProfileRequest(); // en anden telefon end den aktive har åbnet SeasonPass: spørg, om der skal skiftes
         void onPairCode(String code); // null: skjul koden igen
     }
 
@@ -131,6 +132,7 @@ final class SyncServer {
                 boolean active = write(feed, Profiles.id(auth.substring(7)));
                 reply(sock, 200, "{\"ok\":true}");
                 if (active) main.post(() -> { if (listener != null) listener.onFeed(); });
+                else if (!Profiles.pending(app).isEmpty()) main.post(() -> { if (listener != null) listener.onProfileRequest(); });
             } else if (method.equals("GET") && path.equals("/actions")) {
                 if (!authorized(auth)) { reply(sock, 401, "{}"); return; }
                 reply(sock, 200, new JSONObject().put("actions", Actions.all(app, Profiles.id(auth.substring(7)))).toString());
