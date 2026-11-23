@@ -73,6 +73,17 @@ final class BuiltinStrings {
         m.put("tvhome.seenAsk", "Did you watch all of {show} {ep}?");
         m.put("tvhome.yes", "Yes");
         m.put("tvhome.no", "No");
+        m.put("tvhome.console", "GTA in the screensaver");
+        m.put("tvhome.lenM", "{m} min");
+        m.put("tvhome.lenHM", "{h} h {m} min");
+        m.put("tvhome.agoToday", "today");
+        m.put("tvhome.agoYesterday", "yesterday");
+        m.put("tvhome.agoDays", "{n} days ago");
+        m.put("tvhome.psnPlayed", "{len} played");
+        m.put("tvhome.psnTrophies", "{pct}% trophies");
+        m.put("tvhome.psnLast", "last {ago}");
+        m.put("tvhome.psnLogin", "PlayStation login");
+        m.put("tvhome.psnInPhone", "In SeasonPass on your phone");
         m.put("tvhome.keep", "Keep");
         m.put("tvhome.profileN", "Profile {n}");
         m.put("tvhome.saver", "Screensaver");

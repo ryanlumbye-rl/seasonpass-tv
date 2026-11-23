@@ -493,7 +493,28 @@ final class SaverView extends FrameLayout {
                     }
             }
         } catch (Exception ignored) { }
+        Slide cs = consoleSlide();
+        if (cs != null) {
+            out.add(Math.min(3, out.size()), cs);
+            if (out.size() >= 10) out.add(out.size() / 2 + 2, cs);
+        }
         return out;
+    }
+
+    /** Konsolkortet (Console): kun hvis det er slået til, billedet findes, og der er noget at sige. */
+    private Slide consoleSlide() {
+        try {
+            if (!Console.enabled(getContext())) return null;
+            String l = Console.line(getContext(), Strings.of(getContext()));
+            if (l == null) return null;
+            Slide s = new Slide();
+            s.image = Console.hasImage(getContext()) ? "file:" + Console.image(getContext()).getPath() : "gen:dusk";
+            s.title = Console.title(getContext());
+            s.line = l;
+            return s;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private List<Slide> slides(JSONArray a, char kind) {
@@ -519,9 +540,26 @@ final class SaverView extends FrameLayout {
         return out;
     }
 
+    /** Egen baggrund til GTA-slidet, når der ikke ligger et billede på fjernsynet: en lilla og pink solnedgang. */
+    private Bitmap dusk() {
+        int w = 960, h = 540;
+        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas cv = new android.graphics.Canvas(b);
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        p.setShader(new android.graphics.LinearGradient(0, 0, 0, h,
+                new int[]{0xFF22204F, 0xFF5B3F94, 0xFFC25C9C, 0xFFF59A6E, 0xFF2A1740, 0xFF120B22},
+                new float[]{0f, 0.35f, 0.58f, 0.70f, 0.72f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+        cv.drawRect(0, 0, w, h, p);
+        p.setShader(new android.graphics.RadialGradient(w * 0.68f, h * 0.66f, h * 0.30f,
+                new int[]{0xFFFFE3A8, 0x80FFB07A, 0x00F59A6E}, new float[]{0f, 0.35f, 1f}, android.graphics.Shader.TileMode.CLAMP));
+        cv.drawRect(0, 0, w, h * 0.72f, p);
+        return b;
+    }
+
     private Bitmap decode(String ref) {
+        if ("gen:dusk".equals(ref)) return dusk();
         try {
-            File f = Images.local(FeedProvider.dir(getContext()), ref);
+            File f = ref.startsWith("file:") ? new File(ref.substring(5)) : Images.local(FeedProvider.dir(getContext()), ref);
             if (!f.exists()) return null;
             BitmapFactory.Options o = new BitmapFactory.Options();
             o.inJustDecodeBounds = true;

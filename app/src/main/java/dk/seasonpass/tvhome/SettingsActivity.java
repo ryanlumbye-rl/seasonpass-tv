@@ -68,7 +68,11 @@ public class SettingsActivity extends Activity {
         title.setLetterSpacing(-0.02f);
         col.addView(title);
         hint = text("SeasonPass " + Updater.installedVersion(this), 13, regular, MUTED);
-        col.addView(hint, margins(0, 4, 0, 6));
+        LinearLayout versionRow = new LinearLayout(this);
+        versionRow.setGravity(Gravity.CENTER_VERTICAL);
+        versionRow.addView(hint);
+        versionRow.addView(gtaBadge(), margins(12, 0, 0, 0));
+        col.addView(versionRow, margins(0, 4, 0, 6));
 
         LinearLayout home = section(S.t("tvhome.sectionHome"));
         row(home, S.t("tvhome.homeApps"), S.t("tvhome.homeAppsValue", "n", HomeApps.count(this)), 0, x -> startActivity(new Intent(this, AppsActivity.class)));
@@ -122,6 +126,22 @@ public class SettingsActivity extends Activity {
             });
         }
 
+        // GTA: skjult, til mærket ved versionsnummeret er trykket; slået fra som standard.
+        gtaRow = null;
+        if (Console.unlocked(this)) {
+            LinearLayout ps = section("GTA");
+            boolean psOn = Console.enabled(this);
+            row(ps, S.t("tvhome.console"), S.t(psOn ? "tvhome.on" : "tvhome.off"), psOn ? 1 : 2, x -> {
+                Prefs.sp(this).edit().putBoolean("console", !Console.enabled(this)).apply();
+                rebuild();
+            });
+            gtaRow = lastRow;
+            if (psOn) {
+                row(ps, S.t("tvhome.psnLogin"), Console.stats(this) != null ? S.t("tvhome.on") : S.t("tvhome.psnInPhone"),
+                        Console.stats(this) != null ? 1 : 0, x -> { });
+            }
+        }
+
         LinearLayout system = section(S.t("tvhome.sectionSystem"));
         row(system, S.t("tvhome.update"), updateState(), update != null ? 1 : 0, x -> updateClicked());
         row(system, S.t("tvhome.tvSettings"), "›", 0, x -> {
@@ -152,6 +172,30 @@ public class SettingsActivity extends Activity {
     }
 
     /** Overskrift og et mørkt kort til rækkerne under den. */
+    /** Et lille "VI" i solnedgangsfarver; tegnet her, ikke spillets eget logo. */
+    private View gtaBadge() {
+        TextView b = text("VI", 11, bold, 0xFF1A0B2E);
+        b.setPadding(dp(9), dp(3), dp(9), dp(3));
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFFFF6FA5, 0xFFFFA45B});
+        bg.setCornerRadius(dp(99));
+        b.setBackground(bg);
+        b.setFocusable(true);
+        b.setDefaultFocusHighlightEnabled(false);
+        b.setOnFocusChangeListener((v, has) -> v.setForeground(has ? MainActivity.focusRing(dp(99), dp(2)) : null));
+        b.setOnClickListener(x -> gta());
+        return b;
+    }
+
+    /** Mærket ved siden af versionsnummeret: låser GTA op første gang og går derefter til valget. */
+    private void gta() {
+        if (!Console.unlocked(this)) {
+            Console.unlock(this);
+            Toast.makeText(this, "Spiller du GTA?", Toast.LENGTH_LONG).show();
+        }
+        rebuild();
+        if (gtaRow != null) gtaRow.post(() -> gtaRow.requestFocus());
+    }
+
     private LinearLayout section(String label) {
         TextView h = text(label.toUpperCase(S.locale), 12, semibold, MUTED);
         h.setLetterSpacing(0.1f);
@@ -267,8 +311,11 @@ public class SettingsActivity extends Activity {
      * En række i et kort: navnet til venstre, valget til højre. kind: 0 dæmpet tekst, 1 hvid pille (til/nyt), 2 dæmpet pille (fra),
      * 3 dæmpet pille med advarsel. Fokus: hvid kant og et lyst skær, som kortene på forsiden.
      */
+    private View gtaRow, lastRow;
+
     private void row(LinearLayout card, String label, String value, int kind, View.OnClickListener click) {
         LinearLayout r = new LinearLayout(this);
+        lastRow = r;
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setFocusable(true);
         r.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former

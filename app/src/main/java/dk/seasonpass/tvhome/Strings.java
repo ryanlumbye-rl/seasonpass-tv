@@ -65,6 +65,17 @@ final class Strings {
         D.put("tvhome.seenAsk", "Så du hele {show} {ep}?");
         D.put("tvhome.yes", "Ja");
         D.put("tvhome.no", "Nej");
+        D.put("tvhome.console", "GTA i pauseskærmen");
+        D.put("tvhome.lenM", "{m} min");
+        D.put("tvhome.lenHM", "{h} t {m} min");
+        D.put("tvhome.agoToday", "i dag");
+        D.put("tvhome.agoYesterday", "i går");
+        D.put("tvhome.agoDays", "for {n} dage siden");
+        D.put("tvhome.psnPlayed", "{len} spillet");
+        D.put("tvhome.psnTrophies", "{pct} % trofæer");
+        D.put("tvhome.psnLast", "sidst {ago}");
+        D.put("tvhome.psnLogin", "PlayStation-login");
+        D.put("tvhome.psnInPhone", "I SeasonPass på telefonen");
         D.put("tvhome.profileN", "Profil {n}");
         D.put("tvhome.saver", "Pauseskærm");
         D.put("tvhome.saverTv", "Tv'ets egen");
