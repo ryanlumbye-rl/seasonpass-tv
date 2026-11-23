@@ -473,6 +473,11 @@ final class SaverView extends FrameLayout {
         List<Slide> out = new ArrayList<>();
         String mode = Prefs.content(getContext());
         if (mode.equals("clock")) return out;
+        if (mode.equals("gta")) {   // kun GTA: ét slide, og kun hvis easter egg'et er fundet
+            Slide only = consoleSlide(true);
+            if (only != null) out.add(only);
+            return out;
+        }
         try {
             File f = new File(FeedProvider.dir(getContext()), "feed.json");
             JSONObject feed = new JSONObject(new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
@@ -493,7 +498,7 @@ final class SaverView extends FrameLayout {
                     }
             }
         } catch (Exception ignored) { }
-        Slide cs = consoleSlide();
+        Slide cs = consoleSlide(false);
         if (cs != null) {
             out.add(Math.min(3, out.size()), cs);
             if (out.size() >= 10) out.add(out.size() / 2 + 2, cs);
@@ -502,9 +507,9 @@ final class SaverView extends FrameLayout {
     }
 
     /** Konsolkortet (Console): kun hvis det er slået til, billedet findes, og der er noget at sige. */
-    private Slide consoleSlide() {
+    private Slide consoleSlide(boolean only) {
         try {
-            if (!Console.enabled(getContext())) return null;
+            if (only ? !Console.unlocked(getContext()) : !Console.enabled(getContext())) return null;
             String l = Console.line(getContext(), Strings.of(getContext()));
             if (l == null) return null;
             Slide s = new Slide();

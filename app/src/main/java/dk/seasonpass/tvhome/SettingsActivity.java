@@ -89,7 +89,7 @@ public class SettingsActivity extends Activity {
             else rebuild();
         });
         if (!Prefs.standalone(this)) row(saver, S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))), 0, x -> {
-            Prefs.sp(this).edit().putString("saver_content", Prefs.cycle(Prefs.CONTENT_KEYS, Prefs.content(this))).apply();
+            Prefs.sp(this).edit().putString("saver_content", Prefs.nextContent(this)).apply();
             rebuild();
         });
         row(saver, S.t("tvhome.clock"), S.t(Prefs.label(Prefs.CLOCK_KEYS, Prefs.CLOCK_LABELS, Prefs.clock(this))), 0, x -> {
@@ -131,6 +131,7 @@ public class SettingsActivity extends Activity {
         if (Console.unlocked(this)) {
             LinearLayout ps = section("GTA");
             boolean psOn = Console.enabled(this);
+            ps.addView(gtaBanner(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             row(ps, S.t("tvhome.console"), S.t(psOn ? "tvhome.on" : "tvhome.off"), psOn ? 1 : 2, x -> {
                 Prefs.sp(this).edit().putBoolean("console", !Console.enabled(this)).apply();
                 rebuild();
@@ -172,6 +173,22 @@ public class SettingsActivity extends Activity {
     }
 
     /** Overskrift og et mørkt kort til rækkerne under den. */
+    /** Smalt banner øverst i GTA-sektionen: viser, at GTA VI og PlayStation er bygget ind i pauseskærmen, . */
+    private View gtaBanner() {
+        LinearLayout b = new LinearLayout(this);
+        b.setGravity(Gravity.CENTER_VERTICAL);
+        b.setPadding(dp(18), dp(9), dp(18), dp(9));
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xFF2B2160, 0xFF9A4A86, 0xFFF08A5D});
+        bg.setCornerRadius(dp(10));
+        b.setBackground(bg);
+        b.addView(text("GTA VI", 15, bold, 0xFFFFFFFF));
+        b.addView(text("PlayStation", 13, semibold, 0xD9FFFFFF), margins(10, 0, 0, 0));
+        View gap = new View(this);
+        b.addView(gap, new LinearLayout.LayoutParams(0, 1, 1f));
+        b.addView(text(S.t("tvhome.gtaBanner"), 12, regular, 0xCCFFFFFF));
+        return b;
+    }
+
     /** Et lille "VI" i solnedgangsfarver; tegnet her, ikke spillets eget logo. */
     private View gtaBadge() {
         TextView b = text("VI", 11, bold, 0xFF1A0B2E);

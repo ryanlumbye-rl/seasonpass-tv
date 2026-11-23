@@ -83,6 +83,8 @@ final class BuiltinStrings {
         m.put("tvhome.psnTrophies", "{pct}% trophies");
         m.put("tvhome.psnLast", "last {ago}");
         m.put("tvhome.psnLogin", "PlayStation login");
+        m.put("tvhome.gtaBanner", "in the screensaver");
+        m.put("tvhome.contentGta", "GTA only");
         m.put("tvhome.psnInPhone", "In SeasonPass on your phone");
         m.put("tvhome.keep", "Keep");
         m.put("tvhome.profileN", "Profile {n}");
