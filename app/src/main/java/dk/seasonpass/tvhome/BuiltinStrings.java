@@ -70,6 +70,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Only one profile. Pair more phones in SeasonPass to switch.");
         m.put("tvhome.switchAsk", "{name} opened SeasonPass. Switch to {name}?");
         m.put("tvhome.switch", "Switch");
+        m.put("tvhome.moveLeft", "Move left");
+        m.put("tvhome.moveRight", "Move right");
+        m.put("tvhome.removeFromHome", "Remove from home");
         m.put("tvhome.seenAsk", "Did you watch all of {show} {ep}?");
         m.put("tvhome.yes", "Yes");
         m.put("tvhome.no", "No");
@@ -171,6 +174,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Kun én profil. Parr flere telefoner i SeasonPass for at skifte.");
         m.put("tvhome.switchAsk", "{name} åbnede SeasonPass. Skift til {name}?");
         m.put("tvhome.switch", "Skift");
+        m.put("tvhome.moveLeft", "Flyt til venstre");
+        m.put("tvhome.moveRight", "Flyt til højre");
+        m.put("tvhome.removeFromHome", "Fjern fra forsiden");
         m.put("tvhome.seenAsk", "Så du hele {show} {ep}?");
         m.put("tvhome.yes", "Ja");
         m.put("tvhome.no", "Nej");
@@ -259,6 +265,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Bara en profil. Para fler telefoner i SeasonPass för att byta.");
         m.put("tvhome.switchAsk", "{name} öppnade SeasonPass. Byt till {name}?");
         m.put("tvhome.switch", "Byt");
+        m.put("tvhome.moveLeft", "Flytta åt vänster");
+        m.put("tvhome.moveRight", "Flytta åt höger");
+        m.put("tvhome.removeFromHome", "Ta bort från startsidan");
         m.put("tvhome.seenAsk", "Såg du hela {show} {ep}?");
         m.put("tvhome.yes", "Ja");
         m.put("tvhome.no", "Nej");
@@ -347,6 +356,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Bare én profil. Koble til flere telefoner i SeasonPass for å bytte.");
         m.put("tvhome.switchAsk", "{name} åpnet SeasonPass. Bytt til {name}?");
         m.put("tvhome.switch", "Bytt");
+        m.put("tvhome.moveLeft", "Flytt til venstre");
+        m.put("tvhome.moveRight", "Flytt til høyre");
+        m.put("tvhome.removeFromHome", "Fjern fra startsiden");
         m.put("tvhome.seenAsk", "Så du hele {show} {ep}?");
         m.put("tvhome.yes", "Ja");
         m.put("tvhome.no", "Nei");
@@ -435,6 +447,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Vain yksi profiili. Yhdistä lisää puhelimia SeasonPassissa vaihtaaksesi.");
         m.put("tvhome.switchAsk", "{name} avasi SeasonPassin. Vaihdetaanko profiiliin {name}?");
         m.put("tvhome.switch", "Vaihda");
+        m.put("tvhome.moveLeft", "Siirrä vasemmalle");
+        m.put("tvhome.moveRight", "Siirrä oikealle");
+        m.put("tvhome.removeFromHome", "Poista etusivulta");
         m.put("tvhome.seenAsk", "Katsoitko koko jakson {show} {ep}?");
         m.put("tvhome.yes", "Kyllä");
         m.put("tvhome.no", "Ei");
@@ -523,6 +538,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Aðeins einn prófíll. Paraðu fleiri síma í SeasonPass til að skipta.");
         m.put("tvhome.switchAsk", "{name} opnaði SeasonPass. Skipta yfir á {name}?");
         m.put("tvhome.switch", "Skipta");
+        m.put("tvhome.moveLeft", "Færa til vinstri");
+        m.put("tvhome.moveRight", "Færa til hægri");
+        m.put("tvhome.removeFromHome", "Fjarlægja af forsíðu");
         m.put("tvhome.seenAsk", "Horfðir þú á allan þáttinn {show} {ep}?");
         m.put("tvhome.yes", "Já");
         m.put("tvhome.no", "Nei");
@@ -611,6 +629,9 @@ final class BuiltinStrings {
         m.put("tvhome.oneProfile", "Bara ein profil. Knýt fleiri telefonir í SeasonPass fyri at skifta.");
         m.put("tvhome.switchAsk", "{name} opnaði SeasonPass. Skifta til {name}?");
         m.put("tvhome.switch", "Skifta");
+        m.put("tvhome.moveLeft", "Flyt til vinstru");
+        m.put("tvhome.moveRight", "Flyt til høgru");
+        m.put("tvhome.removeFromHome", "Tak av forsíðuni");
         m.put("tvhome.seenAsk", "Hevur tú sæð alt {show} {ep}?");
         m.put("tvhome.yes", "Ja");
         m.put("tvhome.no", "Nei");

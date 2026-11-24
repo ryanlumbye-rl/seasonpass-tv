@@ -926,7 +926,29 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         return c;
     }
 
+    private final java.util.Map<String, View> appTiles = new java.util.HashMap<>();
+
+    /** Hold OK nede på en app på forsiden: flyt den til venstre eller højre, eller fjern den fra forsiden. */
+    private void appMenu(String pkg, String label) {
+        String[] choices = {S.t("tvhome.moveLeft"), S.t("tvhome.moveRight"), S.t("tvhome.removeFromHome")};
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(label)
+                .setItems(choices, (d, which) -> {
+                    if (which == 2) {
+                        HomeApps.toggle(this, pkg);
+                        Toast.makeText(this, S.t("tvhome.homeRemoved", "app", label), Toast.LENGTH_SHORT).show();
+                    } else {
+                        HomeApps.move(this, pkg, which == 0 ? -1 : 1);
+                    }
+                    feedStamp = -1;
+                    reloadIfChanged();   // bygger rækken om i den nye rækkefølge
+                    if (which != 2) main.post(() -> { View t = appTiles.get(pkg); if (t != null) t.requestFocus(); });
+                })
+                .show();
+    }
+
     private View appsRow() {
+        appTiles.clear();
         LinearLayout items = new LinearLayout(this);
         PackageManager pm = getPackageManager();
         // Rækken er brugerens valg (HomeApps); lange tryk på OK fjerner en app, og "Alle apps" føjer til.
@@ -962,13 +984,9 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             }
             tile.setContentDescription(r.loadLabel(pm));
             tile.setOnClickListener(x -> launchPackage(pkg));
+            appTiles.put(pkg, tile);
             tile.setOnLongClickListener(x -> {
-                HomeApps.toggle(this, pkg);
-                int at = items.indexOfChild(tile);
-                items.removeView(tile);
-                View next = items.getChildAt(Math.min(at, items.getChildCount() - 1));
-                if (next != null) next.requestFocus();
-                Toast.makeText(this, S.t("tvhome.homeRemoved", "app", String.valueOf(r.loadLabel(pm))), Toast.LENGTH_SHORT).show();
+                appMenu(pkg, String.valueOf(r.loadLabel(pm)));
                 return true;
             });
             tile.setOnFocusChangeListener(chain(tile, (x, has) -> { if (has) restoreHero(); }));
@@ -1005,17 +1023,12 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         };
     }
 
-    /** Hvid kant med en mørk streg inden i, så rammen også kan ses på lyse logoer (Netflix, YouTube). */
+    /** Fokusrammen: en enkelt hvid kant. */
     static android.graphics.drawable.Drawable focusRing(int radius, int w) {
-        GradientDrawable outer = new GradientDrawable();
-        outer.setCornerRadius(radius);
-        outer.setStroke(w, FG);
-        GradientDrawable inner = new GradientDrawable();
-        inner.setCornerRadius(Math.max(0, radius - w));
-        inner.setStroke(Math.max(1, w / 2), 0xFF0E0E10);
-        android.graphics.drawable.LayerDrawable l = new android.graphics.drawable.LayerDrawable(new Drawable[]{outer, inner});
-        l.setLayerInset(1, w, w, w, w);
-        return l;
+        GradientDrawable ring = new GradientDrawable();
+        ring.setCornerRadius(radius);
+        ring.setStroke(w, FG);
+        return ring;
     }
 
     private TextView pill(String label, boolean primary) {
@@ -1057,14 +1070,23 @@ public class MainActivity extends Activity implements SyncServer.Listener {
      */
     private boolean openLink(String link, String app) {
         Intent view = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (!app.isEmpty() && !"null".equals(app)) {
-            try {
-                startActivity(new Intent(view).setPackage(app));
-                return true;
-            } catch (Exception ignored) { }   // appen findes ikke, eller tager ikke adressen
+        PackageManager pm = getPackageManager();
+        // Kun en app, der faktisk tager imod adressen. Fjernsynets indbyggede "browser" (en stub) tæller ikke: den viser
+        // bare "ingen app", så er det bedre at åbne tjenestens app. TV 2 Play tager fx ikke imod afsnitslinks.
+        String target = null;
+        List<ResolveInfo> handlers = pm.queryIntentActivities(view, 0);
+        for (ResolveInfo r : handlers) if (r.activityInfo.packageName.equals(app)) target = app;
+        if (target == null) {
+            for (ResolveInfo r : handlers) {
+                String p = r.activityInfo.packageName;
+                if (p.equals("com.android.tv.frameworkpackagestubs") || p.equals("android") || p.equals(getPackageName())) continue;
+                target = p;
+                break;
+            }
         }
+        if (target == null) return false;
         try {
-            startActivity(view);
+            startActivity(new Intent(view).setPackage(target));
             return true;
         } catch (Exception e) {
             return false;

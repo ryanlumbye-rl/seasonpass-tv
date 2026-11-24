@@ -64,6 +64,22 @@ final class HomeApps {
         return on;
     }
 
+    /** Flytter en app et sted til venstre (-1) eller højre (+1) i rækken, forbi det næste installerede felt. */
+    static void move(Context c, String pkg, int delta) {
+        List<String> now = list(c);
+        java.util.Set<String> have = new java.util.HashSet<>();
+        for (ResolveInfo r : installed(c)) have.add(r.activityInfo.packageName);
+        int i = now.indexOf(pkg);
+        if (i < 0) return;
+        for (int j = i + delta; j >= 0 && j < now.size(); j += delta) {
+            if (have.contains(now.get(j))) {
+                java.util.Collections.swap(now, i, j);
+                Prefs.sp(c).edit().putString("home_apps", new JSONArray(now).toString()).apply();
+                return;
+            }
+        }
+    }
+
     /** Antal apps på forsiden, der faktisk er installeret. */
     static int count(Context c) {
         int n = 0;

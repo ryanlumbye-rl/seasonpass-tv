@@ -77,6 +77,9 @@ final class Strings {
         D.put("tvhome.psnLogin", "PlayStation-login");
         D.put("tvhome.gtaBanner", "i pauseskærmen");
         D.put("tvhome.contentGta", "Kun GTA");
+        D.put("tvhome.moveLeft", "Flyt til venstre");
+        D.put("tvhome.moveRight", "Flyt til højre");
+        D.put("tvhome.removeFromHome", "Fjern fra forsiden");
         D.put("tvhome.psnInPhone", "I SeasonPass på telefonen");
         D.put("tvhome.profileN", "Profil {n}");
         D.put("tvhome.saver", "Pauseskærm");
