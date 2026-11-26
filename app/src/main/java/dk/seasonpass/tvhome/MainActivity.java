@@ -307,6 +307,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         this.onYes = onYes;
         this.onNo = onNo;
         askBar.setVisibility(View.VISIBLE);
+        askYes.requestFocus();   // ellers kan fjernbetjeningen ikke nå knapperne
         main.removeCallbacks(askTimeout);
         main.postDelayed(askTimeout, 25 * 1000L);
     }
@@ -348,6 +349,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     /** Tilbage-knappen på startskærmen: til toppen, ellers ingenting (Home har intet at gå tilbage til). */
     @Override
     public void onBackPressed() {
+        if (askBar != null && askBar.getVisibility() == View.VISIBLE) { answerAsk(false); return; }
         if (infoPanel != null && infoPanel.getVisibility() == View.VISIBLE) { closeInfo(); return; }
         toTop();
     }
