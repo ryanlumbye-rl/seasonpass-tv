@@ -241,6 +241,30 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         });
     }
 
+    /** Pillen "Ny version": spørg, og hent og installer direkte; ingen omvej om Indstillinger. */
+    private void askUpdate() {
+        String v = Prefs.sp(this).getString("update_version", "");
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(S.t("tvhome.updateAsk", "v", v))
+                .setPositiveButton(S.t("tvhome.updateNow"), (d, w) -> {
+                    Toast.makeText(this, S.t("tvhome.installing", "v", v), Toast.LENGTH_LONG).show();
+                    io.execute(() -> {
+                        String msg = null;
+                        try {
+                            Updater.Info i = Updater.check(this);
+                            if (i == null) msg = S.t("tvhome.latest");
+                            else Updater.install(this, i);
+                        } catch (Exception e) {
+                            msg = S.t("tvhome.updateFail", "e", String.valueOf(e.getMessage()));
+                        }
+                        final String m = msg;
+                        if (m != null) main.post(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
+                    });
+                })
+                .setNegativeButton(S.t("tvhome.later"), null)
+                .show();
+    }
+
     private void showUpdatePill(String version) {
         boolean show = !version.isEmpty() && Updater.newer(version, Updater.installedVersion(this));
         updatePill.setText(S.t("tvhome.newVersion", "v", version));
@@ -354,6 +378,21 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         toTop();
     }
 
+    private void centerFocus(View v) {
+        if (v == null || scroll == null || content == null || v == scroll) return;
+        int top = 0;
+        View p = v;
+        while (p != null && p != content) {
+            top += p.getTop();
+            if (!(p.getParent() instanceof View)) return;
+            p = (View) p.getParent();
+        }
+        if (p != content) return;   // ikke et element i forsiden
+        int target = top + v.getHeight() / 2 - scroll.getHeight() / 2;
+        int max = Math.max(0, content.getHeight() - scroll.getHeight());
+        scroll.smoothScrollTo(0, Math.max(0, Math.min(target, max)));
+    }
+
     private void toTop() {
         if (scroll == null || playButton == null) return;
         for (int i = 0; i < content.getChildCount(); i++) {
@@ -429,6 +468,8 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         content.setPadding(0, 0, 0, dp(40));
         scroll.addView(content, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         root.addView(scroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // Fokus holdes midt på skærmen, når man går nedad: rækken i fokus ligger ikke nederst, men i midten.
+        scroll.getViewTreeObserver().addOnGlobalFocusChangeListener((oldFocus, now) -> centerFocus(now));
 
         // Øverst til højre: profil og ur, som i mockuppen.
         LinearLayout top = new LinearLayout(this);
@@ -449,7 +490,7 @@ public class MainActivity extends Activity implements SyncServer.Listener {
         updatePill.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13 * unit());
         updatePill.setPadding(dp(16), dp(7), dp(16), dp(7));
         updatePill.setVisibility(View.GONE);
-        updatePill.setOnClickListener(x -> startActivity(new Intent(this, SettingsActivity.class)));
+        updatePill.setOnClickListener(x -> askUpdate());
         updatePill.setOnFocusChangeListener(chain(updatePill, null));
         top.addView(updatePill, margins(0, 0, 10, 0));
         top.addView(appsPill, margins(0, 0, 10, 0));

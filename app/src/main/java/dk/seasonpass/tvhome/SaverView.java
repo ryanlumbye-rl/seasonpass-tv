@@ -500,7 +500,7 @@ final class SaverView extends FrameLayout {
         List<Slide> cs = consoleSlides(false);
         if (!cs.isEmpty()) {
             out.add(Math.min(3, out.size()), cs.get(0));
-            if (out.size() >= 10) {
+            if (out.size() >= 10 && Console.fixedImage(getContext()) < 0) {
                 List<Slide> more = consoleSlides(false);   // et nyt tilfældigt billede
                 out.add(out.size() / 2 + 2, more.isEmpty() ? cs.get(0) : more.get(0));
             }
@@ -522,7 +522,12 @@ final class SaverView extends FrameLayout {
             List<String> refs = new ArrayList<>();
             for (File f : files) refs.add("file:" + f.getPath());
             if (refs.isEmpty()) refs.add("gen:dusk");
-            if (!only) {
+            int fixed = Console.fixedImage(getContext());
+            if (fixed >= 0) {
+                String one = refs.get(Math.min(fixed, refs.size() - 1));
+                refs.clear();
+                refs.add(one);
+            } else if (!only) {
                 String one = refs.get(new java.util.Random().nextInt(refs.size()));
                 refs.clear();
                 refs.add(one);

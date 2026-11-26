@@ -48,6 +48,12 @@ final class Console {
 
     static boolean enabled(Context c) { return unlocked(c) && Prefs.sp(c).getBoolean("console", false); }
 
+    /** Valgt fast billede (0, 1, ...) eller -1 for "bland billederne". */
+    static int fixedImage(Context c) {
+        String v = Prefs.sp(c).getString("gta_image", "mix");
+        try { return Math.max(0, Integer.parseInt(v) - 1); } catch (Exception e) { return -1; }
+    }
+
     static String title(Context c) { return "GTA VI"; }
 
     /** Tallene for spillet fra telefonens feed (psn.gta6); null, hvis telefonen ikke har sendt nogen. */

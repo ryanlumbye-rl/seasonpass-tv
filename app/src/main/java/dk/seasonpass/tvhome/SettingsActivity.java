@@ -75,8 +75,8 @@ public class SettingsActivity extends Activity {
         col.addView(versionRow, margins(0, 4, 0, 6));
 
         LinearLayout home = section(S.t("tvhome.sectionHome"));
-        row(home, S.t("tvhome.homeApps"), S.t("tvhome.homeAppsValue", "n", HomeApps.count(this)), 0, x -> startActivity(new Intent(this, AppsActivity.class)));
-        row(home, S.t("tvhome.standalone"), S.t(Prefs.standalone(this) ? "tvhome.on" : "tvhome.off"), 0, x -> {
+        row(home, S.t("tvhome.homeApps"), S.t("tvhome.homeAppsValue", "n", HomeApps.count(this)) + ARROW, 0, S.t("tvhome.subHomeApps"), x -> startActivity(new Intent(this, AppsActivity.class)));
+        row(home, S.t("tvhome.standalone"), S.t(Prefs.standalone(this) ? "tvhome.on" : "tvhome.off"), Prefs.standalone(this) ? 1 : 2, S.t("tvhome.subStandalone"), x -> {
             boolean on = !Prefs.standalone(this);
             Prefs.setStandalone(this, on);
             if (on) Toast.makeText(this, S.t("tvhome.standaloneHint"), Toast.LENGTH_LONG).show();
@@ -84,20 +84,27 @@ public class SettingsActivity extends Activity {
         });
 
         LinearLayout saver = section(S.t("tvhome.saver"));
-        row(saver, S.t("tvhome.saver"), saverState(), 0, x -> {
+        row(saver, S.t("tvhome.saver"), saverState(), 0, S.t("tvhome.subSaver"), x -> {
             if (!Prefs.setDream(this, !Prefs.dreamOn(this))) noRight();
             else rebuild();
         });
-        if (!Prefs.standalone(this)) row(saver, S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))), 0, x -> {
-            Prefs.sp(this).edit().putString("saver_content", Prefs.nextContent(this)).apply();
-            rebuild();
+        if (!Prefs.standalone(this)) row(saver, S.t("tvhome.content"), S.t(Prefs.label(Prefs.CONTENT_KEYS, Prefs.CONTENT_LABELS, Prefs.content(this))) + ARROW, 0, S.t("tvhome.subContent"), x -> {
+            List<String> keys = new ArrayList<>(), names = new ArrayList<>();
+            for (int i = 0; i < Prefs.CONTENT_KEYS.length; i++) {
+                if (Prefs.CONTENT_KEYS[i].equals("gta") && !Console.unlocked(this)) continue;
+                keys.add(Prefs.CONTENT_KEYS[i]);
+                names.add(S.t(Prefs.CONTENT_LABELS[i]));
+            }
+            choose(S.t("tvhome.content"), names, keys.indexOf(Prefs.content(this)), i -> Prefs.sp(this).edit().putString("saver_content", keys.get(i)).apply());
         });
-        row(saver, S.t("tvhome.clock"), S.t(Prefs.label(Prefs.CLOCK_KEYS, Prefs.CLOCK_LABELS, Prefs.clock(this))), 0, x -> {
-            Prefs.sp(this).edit().putString("saver_clock", Prefs.cycle(Prefs.CLOCK_KEYS, Prefs.clock(this))).apply();
-            rebuild();
+        row(saver, S.t("tvhome.clock"), S.t(Prefs.label(Prefs.CLOCK_KEYS, Prefs.CLOCK_LABELS, Prefs.clock(this))) + ARROW, 0, S.t("tvhome.subClock"), x -> {
+            List<String> names = new ArrayList<>();
+            for (String l : Prefs.CLOCK_LABELS) names.add(S.t(l));
+            choose(S.t("tvhome.clock"), names, java.util.Arrays.asList(Prefs.CLOCK_KEYS).indexOf(Prefs.clock(this)),
+                    i -> Prefs.sp(this).edit().putString("saver_clock", Prefs.CLOCK_KEYS[i]).apply());
         });
         boolean musicOn = Prefs.music(this);
-        row(saver, S.t("tvhome.music"), musicState(), !musicOn ? 2 : Prefs.listenerOn(this) ? 1 : 3, x -> {
+        row(saver, S.t("tvhome.music"), musicState(), !musicOn ? 2 : Prefs.listenerOn(this) ? 1 : 3, S.t("tvhome.subMusic"), x -> {
             if (!Prefs.music(this) || !Prefs.listenerOn(this)) {
                 Prefs.sp(this).edit().putBoolean("saver_music", true).apply();
                 if (!Prefs.listenerOn(this)) askListener();
@@ -106,23 +113,26 @@ public class SettingsActivity extends Activity {
             }
             rebuild();
         });
-        row(saver, S.t("tvhome.tryDream"), "›", 0, x -> startActivity(new Intent(this, SaverPreviewActivity.class)));
+        row(saver, S.t("tvhome.tryDream"), ARROW.trim(), 0, null, x -> startActivity(new Intent(this, SaverPreviewActivity.class)));
 
         // Nyheder: slået fra som standard; kilderne følger landet (News.sources).
         LinearLayout news = section(S.t("tvhome.sectionNews"));
         boolean newsOn = Prefs.news(this);
-        row(news, S.t("tvhome.news"), S.t(newsOn ? "tvhome.on" : "tvhome.off"), newsOn ? 1 : 2, x -> {
+        row(news, S.t("tvhome.news"), S.t(newsOn ? "tvhome.on" : "tvhome.off"), newsOn ? 1 : 2, S.t("tvhome.subNews"), x -> {
             Prefs.sp(this).edit().putBoolean("saver_news", !Prefs.news(this)).apply();
             rebuild();
         });
         if (newsOn) {
             java.util.List<News.Source> choices = News.sources(News.country(S));
-            row(news, S.t("tvhome.newsSource"), News.chosen(this, S).name, 0, x -> {
+            row(news, S.t("tvhome.newsSource"), News.chosen(this, S).name + ARROW, 0, null, x -> {
+                List<String> names = new ArrayList<>();
                 int at = 0;
                 News.Source now = News.chosen(this, S);
-                for (int i = 0; i < choices.size(); i++) if (choices.get(i).id.equals(now.id)) at = i;
-                Prefs.sp(this).edit().putString("news_source", choices.get((at + 1) % choices.size()).id).apply();
-                rebuild();
+                for (int i = 0; i < choices.size(); i++) {
+                    names.add(choices.get(i).name);
+                    if (choices.get(i).id.equals(now.id)) at = i;
+                }
+                choose(S.t("tvhome.newsSource"), names, at, i -> Prefs.sp(this).edit().putString("news_source", choices.get(i).id).apply());
             });
         }
 
@@ -132,20 +142,33 @@ public class SettingsActivity extends Activity {
             LinearLayout ps = section("GTA");
             boolean psOn = Console.enabled(this);
             ps.addView(gtaBanner(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            row(ps, S.t("tvhome.console"), S.t(psOn ? "tvhome.on" : "tvhome.off"), psOn ? 1 : 2, x -> {
+            row(ps, S.t("tvhome.console"), S.t(psOn ? "tvhome.on" : "tvhome.off"), psOn ? 1 : 2, null, x -> {
                 Prefs.sp(this).edit().putBoolean("console", !Console.enabled(this)).apply();
                 rebuild();
             });
             gtaRow = lastRow;
+            int imgs = Console.images(this).size();
+            if ((psOn || "gta".equals(Prefs.content(this))) && imgs > 1) {
+                int fx = Console.fixedImage(this);
+                row(ps, S.t("tvhome.gtaImages"), (fx < 0 ? S.t("tvhome.gtaMix") : S.t("tvhome.gtaPicture", "n", String.valueOf(Math.min(fx, imgs - 1) + 1))) + ARROW,
+                        0, S.t("tvhome.subGtaImages"), x -> {
+                    List<String> names = new ArrayList<>();
+                    names.add(S.t("tvhome.gtaMix"));
+                    for (int i = 1; i <= imgs; i++) names.add(S.t("tvhome.gtaPicture", "n", String.valueOf(i)));
+                    int cur = Console.fixedImage(this);
+                    choose(S.t("tvhome.gtaImages"), names, cur < 0 ? 0 : Math.min(cur, imgs - 1) + 1,
+                            i -> Prefs.sp(this).edit().putString("gta_image", i == 0 ? "mix" : String.valueOf(i)).apply());
+                });
+            }
             if (psOn) {
                 row(ps, S.t("tvhome.psnLogin"), Console.stats(this) != null ? S.t("tvhome.on") : S.t("tvhome.psnInPhone"),
-                        Console.stats(this) != null ? 1 : 0, x -> { });
+                        Console.stats(this) != null ? 1 : 0, null, x -> { });
             }
         }
 
         LinearLayout system = section(S.t("tvhome.sectionSystem"));
-        row(system, S.t("tvhome.update"), updateState(), update != null ? 1 : 0, x -> updateClicked());
-        row(system, S.t("tvhome.tvSettings"), "›", 0, x -> {
+        row(system, S.t("tvhome.update"), updateState(), update != null ? 1 : 0, null, x -> updateClicked());
+        row(system, S.t("tvhome.tvSettings"), ARROW.trim(), 0, null, x -> {
             try {
                 startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (Exception e) {
@@ -330,14 +353,36 @@ public class SettingsActivity extends Activity {
      */
     private View gtaRow, lastRow;
 
+    private static final String ARROW = "  ›";
+
+    /** Vælg ét af flere: en liste med det nuværende afkrydset (frem for at skifte rundt, så man kan se alle muligheder). */
+    private void choose(String title, List<String> names, int current, java.util.function.IntConsumer pick) {
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(title)
+                .setSingleChoiceItems(names.toArray(new String[0]), current, (d, which) -> {
+                    pick.accept(which);
+                    d.dismiss();
+                    rebuild();
+                })
+                .show();
+    }
+
     private void row(LinearLayout card, String label, String value, int kind, View.OnClickListener click) {
+        row(card, label, value, kind, null, click);
+    }
+
+    private void row(LinearLayout card, String label, String value, int kind, String sub, View.OnClickListener click) {
         LinearLayout r = new LinearLayout(this);
         lastRow = r;
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setFocusable(true);
         r.setDefaultFocusHighlightEnabled(false);   // vi tegner selv fokus; systemets firkantede skær skinner ellers igennem de runde former
         r.setPadding(dp(18), dp(10), dp(14), dp(10));
-        r.addView(text(label, 17, semibold, FG), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout names = new LinearLayout(this);
+        names.setOrientation(LinearLayout.VERTICAL);
+        names.addView(text(label, 17, semibold, FG));
+        if (sub != null) names.addView(text(sub, 12, regular, MUTED), margins(0, 2, 0, 0));
+        r.addView(names, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (kind == 0) {
             r.addView(text(value, 15, regular, MUTED));
         } else {
