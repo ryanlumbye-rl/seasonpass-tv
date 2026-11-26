@@ -25,6 +25,8 @@ public class FeedProvider extends ContentProvider {
     private static final Pattern IMAGE = Pattern.compile("[0-9a-f]{8,40}\\.jpg");
 
     static File dir(android.content.Context c) {
+        File ext = c.getApplicationContext().getExternalFilesDir(null);
+        if (ext != null) Images.covers = new File(ext, "covers");
         return new File(c.getFilesDir(), "feed");
     }
 

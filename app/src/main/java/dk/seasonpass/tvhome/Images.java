@@ -33,9 +33,29 @@ final class Images {
         }
     }
 
+    /**
+     * Egne billeder i stedet for feedets: en fil med samme navn som billedadressens (fx vLBX...jpg for
+     * https://image.tmdb.org/t/p/w1280/vLBX...jpg) i covers/ i appens mappe på fjernsynet vinder over feedets billede.
+     * Bruges fx til et billede uden logo. Gælder alle steder, billedet vises.
+     */
+    static volatile File covers;
+
+    private static File override(String url) {
+        File d = covers;
+        if (d == null || !isUrl(url)) return null;
+        String name = url.substring(url.lastIndexOf('/') + 1);
+        int q = name.indexOf('?');
+        if (q >= 0) name = name.substring(0, q);
+        if (!name.matches("[A-Za-z0-9_-]{4,80}\\.jpg")) return null;
+        File f = new File(d, name);
+        return f.isFile() && f.length() > 0 ? f : null;
+    }
+
     /** Filen for et billede; henter det først, hvis det er en adresse, der ikke er hentet. Kaldes i baggrunden. */
     static File local(File feedDir, String ref) {
         if (!isUrl(ref)) return new File(feedDir, ref);
+        File mine = override(ref);
+        if (mine != null) return mine;
         File dir = new File(feedDir, "img");
         File f = new File(dir, fileName(ref));
         if (f.exists()) return f;

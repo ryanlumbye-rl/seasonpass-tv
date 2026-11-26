@@ -357,14 +357,7 @@ public class SettingsActivity extends Activity {
 
     /** Vælg ét af flere: en liste med det nuværende afkrydset (frem for at skifte rundt, så man kan se alle muligheder). */
     private void choose(String title, List<String> names, int current, java.util.function.IntConsumer pick) {
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(title)
-                .setSingleChoiceItems(names.toArray(new String[0]), current, (d, which) -> {
-                    pick.accept(which);
-                    d.dismiss();
-                    rebuild();
-                })
-                .show();
+        Popup.choose(this, title, names, current, i -> { pick.accept(i); rebuild(); });
     }
 
     private void row(LinearLayout card, String label, String value, int kind, View.OnClickListener click) {

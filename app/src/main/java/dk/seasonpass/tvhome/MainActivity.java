@@ -179,18 +179,13 @@ public class MainActivity extends Activity implements SyncServer.Listener {
             return;
         }
         String now = Profiles.active(this);
-        String[] labels = new String[ids.size()];
-        for (int i = 0; i < labels.length; i++) {
-            labels[i] = (ids.get(i).equals(now) ? "\u2713  " : "     ") + Profiles.label(this, ids.get(i), i);
-        }
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(S.t("tvhome.who"))
-                .setItems(labels, (d, which) -> {
-                    try { Profiles.select(this, ids.get(which)); } catch (Exception ignored) { }
-                    feedStamp = -1;
-                    reloadIfChanged();
-                })
-                .show();
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i++) labels.add(Profiles.label(this, ids.get(i), i));
+        Popup.choose(this, S.t("tvhome.who"), labels, ids.indexOf(now), which -> {
+            try { Profiles.select(this, ids.get(which)); } catch (Exception ignored) { }
+            feedStamp = -1;
+            reloadIfChanged();
+        });
     }
 
     /** Som knapperne ved siden af: valgt er fyldt hvid med mørkt bogstav eller ikon; ellers en tynd ring. */
@@ -244,25 +239,21 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     /** Pillen "Ny version": spørg, og hent og installer direkte; ingen omvej om Indstillinger. */
     private void askUpdate() {
         String v = Prefs.sp(this).getString("update_version", "");
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(S.t("tvhome.updateAsk", "v", v))
-                .setPositiveButton(S.t("tvhome.updateNow"), (d, w) -> {
-                    Toast.makeText(this, S.t("tvhome.installing", "v", v), Toast.LENGTH_LONG).show();
-                    io.execute(() -> {
-                        String msg = null;
-                        try {
-                            Updater.Info i = Updater.check(this);
-                            if (i == null) msg = S.t("tvhome.latest");
-                            else Updater.install(this, i);
-                        } catch (Exception e) {
-                            msg = S.t("tvhome.updateFail", "e", String.valueOf(e.getMessage()));
-                        }
-                        final String m = msg;
-                        if (m != null) main.post(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
-                    });
-                })
-                .setNegativeButton(S.t("tvhome.later"), null)
-                .show();
+        Popup.ask(this, S.t("tvhome.updateAsk", "v", v), S.t("tvhome.updateNow"), S.t("tvhome.later"), () -> {
+            Toast.makeText(this, S.t("tvhome.installing", "v", v), Toast.LENGTH_LONG).show();
+            io.execute(() -> {
+                String msg = null;
+                try {
+                    Updater.Info i = Updater.check(this);
+                    if (i == null) msg = S.t("tvhome.latest");
+                    else Updater.install(this, i);
+                } catch (Exception e) {
+                    msg = S.t("tvhome.updateFail", "e", String.valueOf(e.getMessage()));
+                }
+                final String m = msg;
+                if (m != null) main.post(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
+            });
+        });
     }
 
     private void showUpdatePill(String version) {
@@ -974,20 +965,17 @@ public class MainActivity extends Activity implements SyncServer.Listener {
     /** Hold OK nede på en app på forsiden: flyt den til venstre eller højre, eller fjern den fra forsiden. */
     private void appMenu(String pkg, String label) {
         String[] choices = {S.t("tvhome.moveLeft"), S.t("tvhome.moveRight"), S.t("tvhome.removeFromHome")};
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(label)
-                .setItems(choices, (d, which) -> {
-                    if (which == 2) {
-                        HomeApps.toggle(this, pkg);
-                        Toast.makeText(this, S.t("tvhome.homeRemoved", "app", label), Toast.LENGTH_SHORT).show();
-                    } else {
-                        HomeApps.move(this, pkg, which == 0 ? -1 : 1);
-                    }
-                    feedStamp = -1;
-                    reloadIfChanged();   // bygger rækken om i den nye rækkefølge
-                    if (which != 2) main.post(() -> { View t = appTiles.get(pkg); if (t != null) t.requestFocus(); });
-                })
-                .show();
+        Popup.choose(this, label, java.util.Arrays.asList(choices), -1, which -> {
+            if (which == 2) {
+                HomeApps.toggle(this, pkg);
+                Toast.makeText(this, S.t("tvhome.homeRemoved", "app", label), Toast.LENGTH_SHORT).show();
+            } else {
+                HomeApps.move(this, pkg, which == 0 ? -1 : 1);
+            }
+            feedStamp = -1;
+            reloadIfChanged();   // bygger rækken om i den nye rækkefølge
+            if (which != 2) main.post(() -> { View t = appTiles.get(pkg); if (t != null) t.requestFocus(); });
+        });
     }
 
     private View appsRow() {
