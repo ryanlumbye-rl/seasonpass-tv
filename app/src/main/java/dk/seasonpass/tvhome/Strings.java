@@ -77,6 +77,9 @@ final class Strings {
         D.put("tvhome.subMusic", "Vis, hvad der spilles");
         D.put("tvhome.subNews", "Overskrifter i pauseskærmen");
         D.put("tvhome.subGtaImages", "Skift mellem billederne eller hold fast i ét");
+        D.put("tvhome.party", "Party");
+        D.put("tvhome.partyStart", "Start partytilstand");
+        D.put("tvhome.subParty", "Visualizer til musikken. OK skifter visning, Tilbage slutter.");
         D.put("tvhome.yes", "Ja");
         D.put("tvhome.no", "Nej");
         D.put("tvhome.console", "GTA i pauseskærmen");

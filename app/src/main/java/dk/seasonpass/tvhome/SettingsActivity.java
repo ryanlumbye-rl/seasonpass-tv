@@ -166,6 +166,11 @@ public class SettingsActivity extends Activity {
             }
         }
 
+        if (Console.unlocked(this)) {
+            LinearLayout party = section(S.t("tvhome.party"));
+            row(party, S.t("tvhome.partyStart"), ARROW.trim(), 0, S.t("tvhome.subParty"), x -> startActivity(new Intent(this, PartyActivity.class)));
+        }
+
         LinearLayout system = section(S.t("tvhome.sectionSystem"));
         row(system, S.t("tvhome.update"), updateState(), update != null ? 1 : 0, null, x -> updateClicked());
         row(system, S.t("tvhome.tvSettings"), ARROW.trim(), 0, null, x -> {

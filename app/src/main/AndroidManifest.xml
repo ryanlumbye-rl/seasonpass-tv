@@ -8,6 +8,8 @@
     <!-- Sync til fjernsyn (25-10-2026): telefonen sender over Wi-Fi (SyncServer), og billederne hentes
          fra TMDB/TVmaze (Images). Før det gik appen aldrig på nettet. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Partytilstand: lytte med på lyden, så visualizeren slår i takt. Kun hvis man giver lov; ellers en animation. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- Ny version (Updater) lægger en opdatering ind over appen selv. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -73,6 +75,13 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Home"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
+        <activity
+            android:name=".PartyActivity"
+            android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Home"
             tools:ignore="DiscouragedApi,LockedOrientationActivity" />

@@ -88,6 +88,9 @@ final class BuiltinStrings {
         m.put("tvhome.subMusic", "Show what is playing");
         m.put("tvhome.subNews", "Headlines in the screensaver");
         m.put("tvhome.subGtaImages", "Rotate between the pictures or keep one");
+        m.put("tvhome.party", "Party");
+        m.put("tvhome.partyStart", "Start party mode");
+        m.put("tvhome.subParty", "Visualizer for the music. OK changes the view, Back ends it.");
         m.put("tvhome.yes", "Yes");
         m.put("tvhome.no", "No");
         m.put("tvhome.console", "GTA in the screensaver");
