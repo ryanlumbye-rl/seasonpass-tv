@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Partytilstand: lytte med på lyden, så visualizeren slår i takt. Kun hvis man giver lov; ellers en animation. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <!-- Ny version (Updater) lægger en opdatering ind over appen selv. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -78,6 +80,11 @@
             android:screenOrientation="landscape"
             android:theme="@style/Home"
             tools:ignore="DiscouragedApi,LockedOrientationActivity" />
+
+        <service
+            android:name=".PartyCapture"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
         <activity
             android:name=".PartyActivity"
