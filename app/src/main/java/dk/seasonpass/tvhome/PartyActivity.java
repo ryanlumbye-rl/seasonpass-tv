@@ -1,11 +1,8 @@
 package dk.seasonpass.tvhome;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -19,7 +16,6 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.media.MediaMetadata;
-import android.media.projection.MediaProjectionManager;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
@@ -54,68 +50,104 @@ import java.util.concurrent.Executors;
 public class PartyActivity extends Activity {
 
     private PartyView view;
+    private android.webkit.WebView web;
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private boolean webOn;
+    private String coverSent = "";
 
     @Override
+    @SuppressWarnings("SetJavaScriptEnabled")
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        android.widget.FrameLayout root = new android.widget.FrameLayout(this);
         view = new PartyView(this);
-        setContentView(view);
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
-        } else {
-            askCapture();
+        view.setVisibility(View.GONE);   // reserve: tegnes kun, hvis webvisualizeren ikke kan hentes (fx uden net)
+        root.addView(view);
+        web = new android.webkit.WebView(this);
+        web.setBackgroundColor(Color.BLACK);
+        android.webkit.WebSettings ws = web.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        web.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void fallback(String why) { main.post(() -> useNative(why)); }
+        }, "Android");
+        web.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage m) {
+                android.util.Log.d("PartyWeb", m.message() + " (" + m.lineNumber() + ")");
+                return true;
+            }
+        });
+        web.setWebViewClient(new android.webkit.WebViewClient() {
+            @Override public void onPageFinished(android.webkit.WebView v, String url) {
+                webOn = true;
+                v.evaluateJavascript("setGuests(" + view.guestsJson() + ")", null);
+            }
+        });
+        root.addView(web);
+        setContentView(root);
+        web.loadUrl("file:///android_asset/party.html");
+    }
+
+    private void useNative(String why) {
+        android.util.Log.w("Party", "bruger den indbyggede visning: " + why);
+        webOn = false;
+        web.setVisibility(View.GONE);
+        view.setVisibility(View.VISIBLE);
+    }
+
+    /** Hvert sekund: det, der spilles (titel, kunstner, cover, tid), ind i weboverfladen. */
+    private final Runnable push = new Runnable() {
+        @Override public void run() {
+            if (webOn) {
+                String cover = view.coverData();
+                String c = cover == null ? "" : cover;
+                String json = view.trackJson(c.equals(coverSent) ? null : c);
+                coverSent = c;
+                web.evaluateJavascript("setTrack(" + json + ")", null);
+            }
+            main.postDelayed(this, 1000);
         }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int code, String[] p, int[] r) {
-        if (r.length > 0 && r[0] == PackageManager.PERMISSION_GRANTED) askCapture();
-    }
-
-    /** Lydfangst kræver et ja til systemets skærmoptagelses-dialog; siger man nej, tegnes animationen i stedet. */
-    private void askCapture() {
-        if (PartyCapture.running) return;
-        try {
-            MediaProjectionManager m = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-            startActivityForResult(m.createScreenCaptureIntent(), 7);
-        } catch (Exception e) {
-            android.util.Log.w("Party", "ingen lydfangst: " + e);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int req, int res, Intent data) {
-        if (req == 7 && res == RESULT_OK && data != null) PartyCapture.start(this, res, data);
-    }
+    };
 
     @Override
     protected void onResume() {
         super.onResume();
         view.hideSystem();
         view.start();
+        main.removeCallbacks(push);
+        main.post(push);
+        web.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         view.stop();
+        main.removeCallbacks(push);
+        web.onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        PartyCapture.halt(this);
+        web.destroy();
     }
 
     @Override
     public boolean onKeyDown(int code, KeyEvent e) {
-        if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            view.next(1);
-            return true;
-        }
-        if (code == KeyEvent.KEYCODE_DPAD_LEFT) {
-            view.next(-1);
+        String k = null;
+        if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) k = "ok";
+        else if (code == KeyEvent.KEYCODE_DPAD_RIGHT) k = "right";
+        else if (code == KeyEvent.KEYCODE_DPAD_LEFT) k = "left";
+        else if (code == KeyEvent.KEYCODE_DPAD_UP) k = "up";
+        else if (code == KeyEvent.KEYCODE_DPAD_DOWN) k = "down";
+        if (k != null) {
+            if (webOn) web.evaluateJavascript("key('" + k + "')", null);
+            else if (k.equals("ok") || k.equals("right")) view.next(1);
+            else if (k.equals("left")) view.next(-1);
             return true;
         }
         return super.onKeyDown(code, e);
@@ -131,7 +163,7 @@ public class PartyActivity extends Activity {
 
     private static final class PartyView extends View {
 
-        private static final int B = PartyCapture.BANDS;
+        private static final int B = 48;
 
         private final Handler main = new Handler(Looper.getMainLooper());
         private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -152,7 +184,7 @@ public class PartyActivity extends Activity {
         private Paint grainPaint;
 
         private long started, modeAt;
-        private float beat, bass, bassAvg, hue = 280;
+        private float beat, hue = 280;
         private int mode;
         private String shownTrack = "";
         private String title = "", artist = "";
@@ -361,31 +393,85 @@ public class PartyActivity extends Activity {
             }
         }
 
+        // --- Til weboverfladen -------------------------------------------------------------------------------
+
+        private Bitmap sentCoverBmp;
+        private String sentCoverData;
+
+        /** Coveret som data-adresse (JPEG, højst 320 px), kun genkodet, når coveret skifter; null uden cover. */
+        String coverData() {
+            Bitmap b = cover;
+            if (b == null) { sentCoverBmp = null; sentCoverData = null; return null; }
+            if (b == sentCoverBmp) return sentCoverData;
+            try {
+                int side = Math.min(b.getWidth(), b.getHeight());
+                Bitmap sq = Bitmap.createBitmap(b, (b.getWidth() - side) / 2, (b.getHeight() - side) / 2, side, side);
+                Bitmap sm = Bitmap.createScaledBitmap(sq, 320, 320, true);
+                java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
+                sm.compress(Bitmap.CompressFormat.JPEG, 85, o);
+                sentCoverData = "data:image/jpeg;base64," + android.util.Base64.encodeToString(o.toByteArray(), android.util.Base64.NO_WRAP);
+                sentCoverBmp = b;
+            } catch (Exception e) {
+                sentCoverData = null;
+            }
+            return sentCoverData;
+        }
+
+        /** JSON til setTrack(): titel, kunstner, spilletid og (kun når den skifter) coveret. */
+        String trackJson(String coverIfNew) {
+            org.json.JSONObject o = new org.json.JSONObject();
+            try {
+                o.put("title", title);
+                o.put("artist", artist);
+                long pos = -1;
+                MediaController m = ctl;
+                PlaybackState st = m == null ? null : m.getPlaybackState();
+                if (st != null && st.getPosition() >= 0) {
+                    pos = st.getPosition();
+                    if (st.getState() == PlaybackState.STATE_PLAYING) {
+                        pos += (long) ((android.os.SystemClock.elapsedRealtime() - st.getLastPositionUpdateTime()) * st.getPlaybackSpeed());
+                    }
+                    if (duration > 0) pos = Math.min(pos, duration);
+                }
+                o.put("pos", pos);
+                o.put("dur", duration);
+                if (coverIfNew != null) o.put("cover", coverIfNew);
+            } catch (Exception ignored) { }
+            return o.toString();
+        }
+
+        String guestsJson() {
+            org.json.JSONArray a = new org.json.JSONArray();
+            for (Guest g : guests) {
+                try {
+                    org.json.JSONObject o = new org.json.JSONObject();
+                    o.put("name", g.name);
+                    if (g.photo != null) {
+                        int side = Math.min(g.photo.getWidth(), g.photo.getHeight());
+                        Bitmap sq = Bitmap.createBitmap(g.photo, (g.photo.getWidth() - side) / 2, (g.photo.getHeight() - side) / 2, side, side);
+                        Bitmap sm = Bitmap.createScaledBitmap(sq, 128, 128, true);
+                        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                        sm.compress(Bitmap.CompressFormat.JPEG, 85, bo);
+                        o.put("photo", "data:image/jpeg;base64," + android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP));
+                    }
+                    a.put(o);
+                } catch (Exception ignored) { }
+            }
+            return a.toString();
+        }
+
         // --- Tegning ------------------------------------------------------------------------------------------
 
         @Override
         protected void onDraw(Canvas c) {
             long now = System.currentTimeMillis();
             float t = (now - started) / 1000f;
-            boolean real = PartyCapture.running && now - PartyCapture.lastSignal < 1500;
-            if (real) {
-                for (int i = 0; i < B; i++) target[i] = PartyCapture.bands[i];
-                float bs = 0;
-                for (int i = 0; i < 5; i++) bs += PartyCapture.bands[i];
-                bass = bs / 5f;
-            } else {
-                synth(t);
-            }
+            boolean real = false;
+            synth(t);
 
             // Slag: bassen over sit eget gennemsnit; uden lyd et fast tempo (124 bpm).
-            float b;
-            if (real) {
-                bassAvg += (bass - bassAvg) * 0.06f;
-                b = Math.max(0f, (bass - bassAvg) * 3.2f);
-            } else {
-                float ph = (t * 124f / 60f) % 1f;
-                b = (float) Math.pow(Math.max(0f, Math.cos(ph * 6.2832f) * 0.5f + 0.5f), 6);
-            }
+            float ph = (t * 124f / 60f) % 1f;
+            float b = (float) Math.pow(Math.max(0f, Math.cos(ph * 6.2832f) * 0.5f + 0.5f), 6);
             beat = Math.min(1f, Math.max(b, beat * 0.86f));
             for (int i = 0; i < B; i++) bands[i] += (target[i] - bands[i]) * (target[i] > bands[i] ? 0.65f : 0.2f);
 

@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Party</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, "Segoe UI", Roboto, sans-serif; color: #fff; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  .glass { background: rgba(255,255,255,.10); border: 1.5px solid rgba(255,255,255,.35); border-radius: 22px; backdrop-filter: blur(14px); }
+  #now { position: fixed; left: 3vw; bottom: 4vh; display: flex; gap: 1.6vw; align-items: center; padding: 1.2vw 1.8vw 1.2vw 1.2vw; max-width: 44vw; transition: opacity .6s; }
+  #cover { width: 9vw; height: 9vw; border-radius: 14px; object-fit: cover; background: rgba(255,255,255,.12); }
+  #meta { min-width: 0; }
+  #title { font-size: 2.3vw; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 18px rgba(0,0,0,.5); }
+  #artist { font-size: 1.4vw; opacity: .8; margin-top: .2vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #time { font-size: 1.15vw; opacity: .85; margin-top: .9vw; font-variant-numeric: tabular-nums; }
+  #bar { height: .35vw; border-radius: 1vw; background: rgba(255,255,255,.28); margin-top: .5vw; width: 22vw; overflow: hidden; }
+  #bar i { display: block; height: 100%; width: 0; background: #fff; }
+  #hud { position: fixed; left: 3vw; top: 3.5vh; display: flex; gap: .8vw; align-items: center; font-size: 1.1vw; font-weight: 700; letter-spacing: .08em; }
+  .pill { padding: .45vw 1.1vw; border-radius: 3vw; }
+  #name { position: fixed; right: 3vw; bottom: 4vh; font-size: 1.15vw; opacity: 0; transition: opacity .8s; text-align: right; max-width: 40vw; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+  #guests { position: fixed; right: 3vw; top: 3.5vh; display: flex; flex-direction: column; gap: 1.1vh; align-items: flex-end; }
+  .g { display: flex; align-items: center; gap: .8vw; padding: .45vw 1.3vw .45vw .45vw; border-radius: 4vw; font-weight: 700; font-size: 1.4vw; }
+  .g img, .g b { width: 3.2vw; height: 3.2vw; border-radius: 50%; object-fit: cover; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#ff6fa5,#ffa45b); color: #1a0b2e; font-size: 1.5vw; }
+  .beat { animation: pop .28s ease-out; }
+  @keyframes pop { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  #msg { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; font-size: 2vw; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><span class="pill glass" id="bpm">TAP OK I TAKT</span></div>
+<div id="guests"></div>
+<div id="now" class="glass">
+  <img id="cover" alt="">
+  <div id="meta">
+    <div id="title">Spil noget musik</div>
+    <div id="artist"></div>
+    <div id="time"></div>
+    <div id="bar"><i></i></div>
+  </div>
+</div>
+<div id="name"></div>
+<div id="msg">Henter visuals …</div>
+
+<script>
+var CDN = "https://cdn.jsdelivr.net/npm/";
+var LIBS = [CDN + "butterchurn@2.6.7/lib/butterchurn.min.js",
+            CDN + "butterchurn-presets@2.4.7/lib/butterchurnPresets.min.js",
+            CDN + "butterchurn-presets@2.4.7/lib/butterchurnPresetsExtra.min.js"];
+
+function load(i, done, fail) {
+  if (i >= LIBS.length) return done();
+  var s = document.createElement("script");
+  s.src = LIBS[i];
+  s.onload = function () { load(i + 1, done, fail); };
+  s.onerror = function () { if (i >= 2) load(i + 1, done, fail); else fail("Kunne ikke hente " + LIBS[i]); };   // "Extra" er et plus
+  document.head.appendChild(s);
+}
+
+// ---------------------------------------------------------------- lyd: en lydløs syntetisk "dj", der giver visuals noget at reagere på
+var ctx, master, bpm = 118, step = 0, nextT = 0, lastBeatCb = 0;
+var taps = [];
+
+function noiseBuf() {
+  var b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
+  for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+var NB;
+
+function kick(t) {
+  var o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
+  g.gain.setValueAtTime(1.0, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.35);
+}
+function snare(t) {
+  var n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  n.buffer = NB; f.type = "bandpass"; f.frequency.value = 1900; f.Q.value = 0.8;
+  g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  n.connect(f); f.connect(g); g.connect(master); n.start(t, Math.random()); n.stop(t + 0.22);
+}
+function hat(t, v) {
+  var n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  n.buffer = NB; f.type = "highpass"; f.frequency.value = 7500;
+  g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  n.connect(f); f.connect(g); g.connect(master); n.start(t, Math.random()); n.stop(t + 0.08);
+}
+function bass(t, hz, len) {
+  var o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  o.type = "sawtooth"; o.frequency.value = hz; f.type = "lowpass"; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(140, t + len);
+  g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+  o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + len + 0.02);
+}
+function lead(t, hz, len) {
+  var o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "square"; o.frequency.value = hz;
+  g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + len + 0.02);
+}
+var SCALE = [0, 3, 5, 7, 10, 12, 15];
+function note(root, semis) { return 55 * Math.pow(2, (root + semis) / 12); }
+
+function schedule() {
+  while (nextT < ctx.currentTime + 0.12) {
+    var sp = 60 / bpm / 4, s = step % 16, bar = Math.floor(step / 16), t = nextT;
+    var root = [0, 0, 5, 3][bar % 4];
+    if (s % 4 === 0) { kick(t); beatAt(t); }
+    if (s === 4 || s === 12) snare(t);
+    if (s % 2 === 0) hat(t, s % 4 === 2 ? 0.34 : 0.16);
+    if (s === 15 && bar % 4 === 3) { hat(t, .5); hat(t + sp / 2, .5); }
+    if ([0, 3, 6, 10, 12].indexOf(s) >= 0) bass(t, note(root, 0) * (s === 10 ? 2 : 1), sp * 2.6);
+    if (s % 2 === 1 && Math.random() < 0.55) lead(t, note(root + 24, SCALE[(Math.random() * SCALE.length) | 0]), sp * 1.4);
+    nextT += sp;
+    step++;
+  }
+}
+function beatAt(t) {
+  var d = Math.max(0, (t - ctx.currentTime) * 1000);
+  setTimeout(function () {
+    var el = document.getElementById("bpm");
+    el.classList.remove("beat"); void el.offsetWidth; el.classList.add("beat");
+  }, d);
+}
+
+function tap() {
+  var now = performance.now();
+  if (taps.length && now - taps[taps.length - 1] > 2000) taps = [];
+  taps.push(now);
+  if (taps.length > 8) taps.shift();
+  if (taps.length >= 2) {
+    var sum = 0;
+    for (var i = 1; i < taps.length; i++) sum += taps[i] - taps[i - 1];
+    var b = 60000 / (sum / (taps.length - 1));
+    while (b < 70) b *= 2;
+    while (b > 180) b /= 2;
+    setBpm(b);
+  }
+  // Slaget lægges på det tryk: ny takt starter nu, så kick falder sammen med musikken.
+  step = 0;
+  nextT = ctx.currentTime + 0.03;
+}
+function setBpm(b) {
+  bpm = Math.max(60, Math.min(190, Math.round(b)));
+  document.getElementById("bpm").textContent = "♩ " + bpm + " BPM · OK = TAP";
+}
+
+// ---------------------------------------------------------------- visuals
+var viz, names = [], presets, idx = 0, auto = true, nextAt = 0;
+var W = 960, H = 540;
+
+function showName(n) {
+  var el = document.getElementById("name");
+  el.textContent = n; el.style.opacity = 1;
+  clearTimeout(showName.t);
+  showName.t = setTimeout(function () { el.style.opacity = 0; }, 4000);
+}
+function go(i, blend) {
+  idx = (i + names.length) % names.length;
+  viz.loadPreset(presets[names[idx]], blend === undefined ? 2.5 : blend);
+  showName(names[idx].replace(/\s+/g, " "));
+  nextAt = performance.now() + 28000;
+}
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+function start() {
+  document.getElementById("msg").style.display = "none";
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain(); master.gain.value = 0.9;
+  var z = ctx.createGain(); z.gain.value = 0; master.connect(z); z.connect(ctx.destination);   // lydløst, men grafen kører
+  NB = noiseBuf();
+  setBpm(118);
+  nextT = ctx.currentTime + 0.1;
+  setInterval(schedule, 25);
+
+  var canvas = document.getElementById("c");
+  canvas.width = W; canvas.height = H;
+  viz = butterchurn.default.createVisualizer(ctx, canvas, { width: W, height: H, pixelRatio: 1, textureRatio: 1 });
+  viz.connectAudio(master);
+  presets = {};
+  [window.butterchurnPresets, window.butterchurnPresetsExtra].forEach(function (p) {
+    if (p && p.getPresets) { var o = p.getPresets(); for (var k in o) presets[k] = o[k]; }
+  });
+  names = shuffle(Object.keys(presets));
+  if (!names.length) { fail("Ingen presets"); return; }
+  go(0, 0);
+  (function frame() {
+    if (auto && performance.now() > nextAt) go(idx + 1);
+    viz.render();
+    requestAnimationFrame(frame);
+  })();
+  if (ctx.state === "suspended") ctx.resume();
+}
+
+function fail(msg) {
+  document.getElementById("msg").style.display = "flex";
+  document.getElementById("msg").textContent = msg;
+  if (window.Android) Android.fallback(msg);
+}
+
+// ---------------------------------------------------------------- kaldt fra appen
+function key(k) {
+  if (!viz) return;
+  if (k === "ok") tap();
+  else if (k === "right") { auto = true; go(idx + 1, 1.5); }
+  else if (k === "left") { auto = true; go(idx - 1, 1.5); }
+  else if (k === "up") setBpm(bpm + 2);
+  else if (k === "down") setBpm(bpm - 2);
+}
+function mmss(ms) { var s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+function setTrack(t) {
+  document.getElementById("title").textContent = t.title || "Spil noget musik";
+  document.getElementById("artist").textContent = t.artist || "";
+  var img = document.getElementById("cover");
+  if (t.cover) { img.src = t.cover; img.style.display = ""; } else if (t.cover === "") { img.removeAttribute("src"); }
+  var tm = document.getElementById("time"), bar = document.querySelector("#bar i");
+  if (t.pos >= 0) {
+    tm.textContent = mmss(t.pos) + (t.dur > 0 ? "  /  " + mmss(t.dur) : "");
+    bar.style.width = t.dur > 0 ? Math.min(100, t.pos / t.dur * 100) + "%" : "0";
+  } else { tm.textContent = ""; bar.style.width = "0"; }
+}
+function setGuests(list) {
+  var box = document.getElementById("guests");
+  box.innerHTML = "";
+  list.forEach(function (g) {
+    var d = document.createElement("div"); d.className = "g glass";
+    var a = g.photo ? document.createElement("img") : document.createElement("b");
+    if (g.photo) a.src = g.photo; else a.textContent = g.name.charAt(0).toUpperCase();
+    var n = document.createElement("span"); n.textContent = g.name;
+    d.appendChild(a); d.appendChild(n); box.appendChild(d);
+  });
+}
+
+load(0, start, fail);
+</script>
+</body>
+</html>
